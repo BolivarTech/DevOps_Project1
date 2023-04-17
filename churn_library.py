@@ -44,15 +44,19 @@ OS_ = 'unknown'
 
 class churn_predictor:
     
-    def __init__(self, pth=None, imgPth='./images', modelsPth='./models'):
+    def __init__(self, dataPth, imgPth='./images', modelsPth='./models'):
         '''
         class constructor
         '''
         
-        if pth is not None:
-            self.__df = pd.read_csv(pth)
-            logger.info(f"File {pth} loaded with shape {self.__df.shape} (01)")
-            logger.debug(f"{self.__df.head()}")
+        if dataPth is not None:
+            try:
+                self.__df = pd.read_csv(dataPth)
+            except FileNotFoundError as err:
+                logger.error(err)
+            else:
+                logger.info(f"File {dataPth} loaded with shape {self.__df.shape} (01)")
+                logger.debug(f"{self.__df.head()}")
         else:
             self.__df = None
             logger.warning(f"NO Dataset File Defined (02)")
@@ -82,9 +86,14 @@ class churn_predictor:
         '''	
     	
         if pth is not None:
-            self.__df = pd.read_csv(pth)
-            logger.info(f"File {pth} loaded with shape {self.__df.shape} (03)")
-            logger.debug(f"{self.__df.head()}")
+            try:
+                self.__df = pd.read_csv(pth)
+            except FileNotFoundError as err:
+                logger.error(err)
+                raise err
+            else:
+                logger.info(f"File {pth} loaded with shape {self.__df.shape} (03)")
+                logger.debug(f"{self.__df.head()}")
         else:
             self.__df = None
             logger.warning(f"NO Dataset File Defined (04)")
@@ -104,15 +113,7 @@ class churn_predictor:
         
         logger.info(f"{self.__df.isnull().sum()}")
         logger.debug(f"{self.__df.describe()}")
-   
-        cat_columns = [
-            'Gender',
-            'Education_Level',
-            'Marital_Status',
-            'Income_Category',
-            'Card_Category'                
-        ]
-        
+
         quant_columns = [
             'Customer_Age',
             'Dependent_count', 
@@ -204,13 +205,15 @@ class churn_predictor:
         self.encoder_helper(category_lst)
 
         keep_cols = ['Customer_Age', 'Dependent_count', 'Months_on_book',
-             'Total_Relationship_Count', 'Months_Inactive_12_mon',
-             'Contacts_Count_12_mon', 'Credit_Limit', 'Total_Revolving_Bal',
-             'Avg_Open_To_Buy', 'Total_Amt_Chng_Q4_Q1', 'Total_Trans_Amt',
-             'Total_Trans_Ct', 'Total_Ct_Chng_Q4_Q1', 'Avg_Utilization_Ratio',
-             'Gender_Churn', 'Education_Level_Churn', 'Marital_Status_Churn', 
-             'Income_Category_Churn', 'Card_Category_Churn']
-  
+                    'Total_Relationship_Count', 'Months_Inactive_12_mon',
+                    'Contacts_Count_12_mon', 'Credit_Limit', 
+                    'Total_Revolving_Bal', 'Avg_Open_To_Buy', 
+                    'Total_Amt_Chng_Q4_Q1', 'Total_Trans_Amt', 
+                    'Total_Trans_Ct', 'Total_Ct_Chng_Q4_Q1', 
+                    'Avg_Utilization_Ratio', 'Gender_Churn', 
+                    'Education_Level_Churn', 'Marital_Status_Churn', 
+                    'Income_Category_Churn', 'Card_Category_Churn']
+
         self.__X = pd.DataFrame()
         self.__X[keep_cols] = self.__df[keep_cols]
         logger.debug(f"{self.__X.head()}")
@@ -226,11 +229,11 @@ class churn_predictor:
 
     def train_models(self):
         '''
-        train, store model results: images + scores, and store models
+        train, store model results: images + scores, and store best models
         input:
-                  None
+                None
         output:
-                  None
+                None
         '''
         
         # grid search
@@ -285,7 +288,7 @@ class churn_predictor:
                 None
     
         output:
-                 None
+                None
         '''
         
         lrc_plot = plot_roc_curve(self.__lrc, self.__X_test, self.__y_test)
@@ -327,7 +330,7 @@ class churn_predictor:
                 output_pth: path to store the figure
     
         output:
-                 None
+                None
         '''
         
         # Calculate feature importances
@@ -385,7 +388,7 @@ def main():
     '''
     Run the main script function
     '''
-    churnPred = churn_predictor()
+    churnPred = churn_predictor("./data/bank_data.csv")
     churnPred.run()
 
 if __name__ == '__main__':
