@@ -1,11 +1,20 @@
 """
 Perform TDD on the classes
 """
-from os.path import exists
+# import system libraries
+import logging as log
+import logging.handlers
+import sys
 import os
-import logging
+from os.path import exists
+
 from churn_library import churn_predictor 
 
+# Main Logger Environment 
+logHandler = None
+logger = None
+logLevel_ = logging.INFO
+logFileName = 'churn_library_test.log'
 
 class churn_predictor_test(churn_predictor):
     '''
@@ -116,14 +125,41 @@ class churn_predictor_test(churn_predictor):
         except AssertionError as err:
             logging.error(err)
 
+  
+    def run(self):
+        '''
+        Run the Test
+        '''
+
+        self.test_import()
+        self.test_eda()
+        self.test_encoder_helper()
+        self.test_perform_feature_engineering()
+        self.test_train_models()
 
 
 if __name__ == "__main__":
-	logging.basicConfig(
-        filename='./logs/churn_library_test.log',
-        level = logging.INFO,
-        filemode='w',
-        format='%(name)s - %(levelname)s - %(message)s')
+	# logging.basicConfig(
+    #     filename='./logs/churn_library_test.log',
+    #     level = logging.INFO,
+    #     filemode='w',
+    #     format='%(name)s - %(levelname)s - %(message)s')
+    
+    logger = log.getLogger('ChurmPredTest')  # Get Logger
+    # Add the log message file handler to the logger
+    logHandler = log.handlers.RotatingFileHandler('./log/' + logFileName, maxBytes=10485760, backupCount=5)
+    # Logger Formater
+    logFormatter = log.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s: %(message)s',
+                                datefmt='%Y/%m/%d %H:%M:%S')
+    logHandler.setFormatter(logFormatter)
+    # Add handler to logger
+    if 'logHandler' in globals():
+        logger.addHandler(logHandler)
+    else:
+        logger.debug(f"logHandler NOT defined (017)")
+    # Set Logger Lever
+    logger.setLevel(logLevel_)
     
 	# Run Tests
-	tester = churn_predictor_test("./data/bank_data.csv")
+    tester = churn_predictor_test("./data/bank_data.csv", log_handler=logHandler)
+    tester.run()

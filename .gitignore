@@ -1,1 +1,6 @@
 .ipynb_checkpoints
+.pytest_cache
+.vscode
+vscode/launch.json
+__pycache__
+project_1.code-workspace

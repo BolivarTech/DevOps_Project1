@@ -1,0 +1,2 @@
+2023/04/17 15:21:45 - churn_predictor_class - INFO: File ./data/bank_data.csv loaded with shape (10127, 22) (01)
+2023/04/17 15:21:57 - churn_predictor_class - INFO: File ./data/bank_data.csv loaded with shape (10127, 22) (03)

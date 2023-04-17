@@ -44,36 +44,50 @@ OS_ = 'unknown'
 
 class churn_predictor:
     
-    def __init__(self, dataPth, imgPth='./images', modelsPth='./models'):
+    def __init__(self, dataPth, imgPth='./images', modelsPth='./models', log_handler=None):
         '''
         class constructor
         '''
         
+        global logLevel_
+
+        # Set the error logger
+        self.__logger = log.getLogger('churn_predictor_class')
+        # Add handler to logger
+        self.__logHandler = log_handler
+        if self.__logHandler is not None:
+            self.__logger.addHandler(self.__logHandler)
+        else:
+            self.__logger.debug(f"logHandler NOT defined (001)")
+        # Set Logger Lever
+        self.__logger.setLevel(logLevel_)
+
+
         if dataPth is not None:
             try:
                 self.__df = pd.read_csv(dataPth)
             except FileNotFoundError as err:
-                logger.error(err)
+                self.__logger.error(err)
             else:
-                logger.info(f"File {dataPth} loaded with shape {self.__df.shape} (01)")
-                logger.debug(f"{self.__df.head()}")
+                self.__logger.info(f"File {dataPth} loaded with shape {self.__df.shape} (01)")
+                self.__logger.debug(f"{self.__df.head()}")
         else:
             self.__df = None
-            logger.warning(f"NO Dataset File Defined (02)")
+            self.__logger.warning(f"NO Dataset File Defined (02)")
         
         if imgPth is not None:
             self.__imgPth = imgPth
-            logger.debug(f"Image Path set to {self.__imgPth} ()")
+            self.__logger.debug(f"Image Path set to {self.__imgPth} ()")
         else:
             self.__imgPth = "."
-            logger.warning(f"Image Path NOT Defined (02)")
+            self.__logger.warning(f"Image Path NOT Defined (02)")
 
         if modelsPth is not None:
             self.__modelsPth = modelsPth
-            logger.debug(f"Models Path set to {self.__modelsPth} ()")
+            self.__logger.debug(f"Models Path set to {self.__modelsPth} ()")
         else:
             self.__modelsPth = "."
-            logger.warning(f"Models Path NOT Defined (02)")
+            self.__logger.warning(f"Models Path NOT Defined (02)")
 
     def import_data(self, pth):
         '''
@@ -84,19 +98,19 @@ class churn_predictor:
         output:
                 df: pandas dataframe
         '''	
-    	
+
         if pth is not None:
             try:
                 self.__df = pd.read_csv(pth)
             except FileNotFoundError as err:
-                logger.error(err)
+                self.__logger.error(err)
                 raise err
             else:
-                logger.info(f"File {pth} loaded with shape {self.__df.shape} (03)")
-                logger.debug(f"{self.__df.head()}")
+                self.__logger.info(f"File {pth} loaded with shape {self.__df.shape} (03)")
+                self.__logger.debug(f"{self.__df.head()}")
         else:
             self.__df = None
-            logger.warning(f"NO Dataset File Defined (04)")
+            self.__logger.warning(f"NO Dataset File Defined (04)")
         return self.__df
 
     
@@ -111,8 +125,8 @@ class churn_predictor:
                 None
         '''
         
-        logger.info(f"{self.__df.isnull().sum()}")
-        logger.debug(f"{self.__df.describe()}")
+        self.__logger.info(f"{self.__df.isnull().sum()}")
+        self.__logger.debug(f"{self.__df.describe()}")
 
         quant_columns = [
             'Customer_Age',
@@ -216,7 +230,7 @@ class churn_predictor:
 
         self.__X = pd.DataFrame()
         self.__X[keep_cols] = self.__df[keep_cols]
-        logger.debug(f"{self.__X.head()}")
+        self.__logger.debug(f"{self.__X.head()}")
         
         # train test split 
         self.__X_train,
@@ -273,7 +287,7 @@ class churn_predictor:
         logout += "train results\n"
         logout += classification_report(self.__y_train, self.__y_train_preds_lr) + "\n"
 
-        logger.info(logout)
+        self.__logger.info(logout)
 
         # save best model
         joblib.dump(self.__cv_rfc.best_estimator_, self.__modelsPth + '/rfc_model.pkl')
@@ -353,7 +367,7 @@ class churn_predictor:
         
         # Add feature names as x-axis labels
         plt.xticks(range(self.__X.shape[1]), names, rotation=90);
- 
+
         plt.savefig(self.__imgPth + "/" + 'features_importance.png')
 
         plt.rc('figure', figsize=(5, 5))
@@ -388,7 +402,7 @@ def main():
     '''
     Run the main script function
     '''
-    churnPred = churn_predictor("./data/bank_data.csv")
+    churnPred = churn_predictor("./data/bank_data.csv", log_handler=logHandler)
     churnPred.run()
 
 if __name__ == '__main__':
@@ -427,7 +441,7 @@ if __name__ == '__main__':
     logHandler = log.handlers.RotatingFileHandler(FullFileNamePath, maxBytes=10485760, backupCount=5)
     # Logger Formater
     logFormatter = log.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s: %(message)s',
-                                 datefmt='%Y/%m/%d %H:%M:%S')
+                                datefmt='%Y/%m/%d %H:%M:%S')
     logHandler.setFormatter(logFormatter)
     # Add handler to logger
     if 'logHandler' in globals():
@@ -440,4 +454,4 @@ if __name__ == '__main__':
     logger.debug(f"Running in {OS_} (018)")
 
     # Main Script
-    main(computer_name)
+    main()
