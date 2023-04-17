@@ -65,21 +65,21 @@ class churn_predictor:
 
         if dataPth is not None:
             try:
-                self.__df = pd.read_csv(dataPth)
+                self._df = pd.read_csv(dataPth)
             except FileNotFoundError as err:
                 self.__logger.error(err)
             else:
-                self.__logger.info(f"File {dataPth} loaded with shape {self.__df.shape} (01)")
-                self.__logger.debug(f"{self.__df.head()}")
+                self.__logger.info(f"File {dataPth} loaded with shape {self._df.shape} (01)")
+                self.__logger.debug(f"{self._df.head()}")
         else:
-            self.__df = None
+            self._df = None
             self.__logger.warning(f"NO Dataset File Defined (02)")
         
         if imgPth is not None:
-            self.__imgPth = imgPth
-            self.__logger.debug(f"Image Path set to {self.__imgPth} ()")
+            self._imgPth = imgPth
+            self.__logger.debug(f"Image Path set to {self._imgPth} ()")
         else:
-            self.__imgPth = "."
+            self._imgPth = "."
             self.__logger.warning(f"Image Path NOT Defined (02)")
 
         if modelsPth is not None:
@@ -101,17 +101,17 @@ class churn_predictor:
 
         if pth is not None:
             try:
-                self.__df = pd.read_csv(pth)
+                self._df = pd.read_csv(pth)
             except FileNotFoundError as err:
                 self.__logger.error(err)
                 raise err
             else:
-                self.__logger.info(f"File {pth} loaded with shape {self.__df.shape} (03)")
-                self.__logger.debug(f"{self.__df.head()}")
+                self.__logger.info(f"File {pth} loaded with shape {self._df.shape} (03)")
+                self.__logger.debug(f"{self._df.head()}")
         else:
-            self.__df = None
+            self._df = None
             self.__logger.warning(f"NO Dataset File Defined (04)")
-        return self.__df
+        return self._df
 
     
     
@@ -125,8 +125,8 @@ class churn_predictor:
                 None
         '''
         
-        self.__logger.info(f"{self.__df.isnull().sum()}")
-        self.__logger.debug(f"{self.__df.describe()}")
+        self.__logger.info(f"{self._df.isnull().sum()}")
+        self.__logger.debug(f"{self._df.describe()}")
 
         quant_columns = [
             'Customer_Age',
@@ -145,39 +145,39 @@ class churn_predictor:
             'Avg_Utilization_Ratio'
         ]
     
-        self.__df['Churn'] = self.__df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
+        self._df['Churn'] = self._df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
 
         plt.figure(figsize=(20,10)) 
-        plot = self.__df['Churn'].hist()
+        plot = self._df['Churn'].hist()
         # Save the histogram
-        plt.savefig(self.__imgPth + "/" + 'hist-1.png')
+        plt.savefig(self._imgPth + "/" + 'hist-1.png')
 
         plt.figure(figsize=(20,10)) 
-        plot = self.__df['Customer_Age'].hist()
-        plt.savefig(self.__imgPth + "/" + 'hist-2.png')
+        plot = self._df['Customer_Age'].hist()
+        plt.savefig(self._imgPth + "/" + 'hist-2.png')
 
         plt.figure(figsize=(20,10)) 
-        plot = self.__df.Marital_Status.value_counts('normalize').plot(kind='bar');
-        plt.savefig(self.__imgPth + "/" + 'hist-3.png')
-
-        plt.figure(figsize=(20,10)) 
-        # distplot is deprecated. Use histplot instead
-        # sns.distplot(df['Total_Trans_Ct']);
-        # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
-        sns.histplot(self.__df['Total_Trans_Ct'], stat='density', kde=True);
-        plt.savefig(self.__imgPth + "/" + 'hist-4.png')
+        plot = self._df.Marital_Status.value_counts('normalize').plot(kind='bar');
+        plt.savefig(self._imgPth + "/" + 'hist-3.png')
 
         plt.figure(figsize=(20,10)) 
         # distplot is deprecated. Use histplot instead
         # sns.distplot(df['Total_Trans_Ct']);
         # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
-        sns.histplot(self.__df['Total_Trans_Ct'], stat='density', kde=True);
-        plt.savefig(self.__imgPth + "/" + 'hist-5.png')
+        sns.histplot(self._df['Total_Trans_Ct'], stat='density', kde=True);
+        plt.savefig(self._imgPth + "/" + 'hist-4.png')
 
         plt.figure(figsize=(20,10)) 
-        sns.heatmap(self.__df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
+        # distplot is deprecated. Use histplot instead
+        # sns.distplot(df['Total_Trans_Ct']);
+        # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
+        sns.histplot(self._df['Total_Trans_Ct'], stat='density', kde=True);
+        plt.savefig(self._imgPth + "/" + 'hist-5.png')
+
+        plt.figure(figsize=(20,10)) 
+        sns.heatmap(self._df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
         # plt.show()
-        plt.savefig(self.__imgPth + "/" + 'hist-6.png')
+        plt.savefig(self._imgPth + "/" + 'hist-6.png')
 
 
     def encoder_helper(self, category_lst, response='Churn'):
@@ -194,9 +194,9 @@ class churn_predictor:
                 df: pandas dataframe with new columns for each category
         '''
         for category in category_lst:
-            groups = self.__df.groupby(category).mean()[response]
-            self.__df[category + "_" + response] = [ groups.loc[val] for val in self.__df[category] ]     
-            return self.__df
+            groups = self._df.groupby(category).mean()[response]
+            self._df[category + "_" + response] = [ groups.loc[val] for val in self._df[category] ]     
+            return self._df
     
     
     def perform_feature_engineering(self, response='Churn'):
@@ -211,7 +211,7 @@ class churn_predictor:
                 y_test: y testing data
         '''
 
-        y = self.__df[response]
+        y = self._df[response]
         
         category_lst = ['Gender', 'Education_Level', 'Marital_Status',
                         'Income_Category', 'Card_Category']
@@ -229,7 +229,7 @@ class churn_predictor:
                     'Income_Category_Churn', 'Card_Category_Churn']
 
         self.__X = pd.DataFrame()
-        self.__X[keep_cols] = self.__df[keep_cols]
+        self.__X[keep_cols] = self._df[keep_cols]
         self.__logger.debug(f"{self.__X.head()}")
         
         # train test split 
@@ -268,8 +268,8 @@ class churn_predictor:
         
         self.__lrc.fit(self.__X_train, self.__y_train)
         
-        self.__y_train_preds_rf = cv_rfc.best_estimator_.predict(self.__X_train)
-        self.__y_test_preds_rf = cv_rfc.best_estimator_.predict(self.__X_test)
+        self.__y_train_preds_rf = self.__cv_rfc.best_estimator_.predict(self.__X_train)
+        self.__y_test_preds_rf = self.__cv_rfc.best_estimator_.predict(self.__X_test)
         
         self.__y_train_preds_lr = self.__lrc.predict(self.__X_train)
         self.__y_test_preds_lr = self.__lrc.predict(self.__X_test)
@@ -306,43 +306,40 @@ class churn_predictor:
         '''
         
         lrc_plot = plot_roc_curve(self.__lrc, self.__X_test, self.__y_test)
-        plt.savefig(self.__imgPth + "/" + 'false-true-positives_rate_lrc.png')
+        plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_lrc.png')
         
         plt.figure(figsize=(15, 8))
         ax = plt.gca()
         rfc_disp = plot_roc_curve(self.__cv_rfc.best_estimator_, self.__X_test, self.__y_test, ax=ax, alpha=0.8)
         lrc_plot.plot(ax=ax, alpha=0.8)
         #plt.show()
-        plt.savefig(self.__imgPth + "/" + 'false-true-positives_rate_rfc.png')
+        plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_rfc.png')
 
         # Test Saved Models
         rfc_model = joblib.load(self.__modelsPth + '/rfc_model.pkl')
         lr_model = joblib.load(self.__modelsPth + '/logistic_model.pkl')
 
         lrc_plot = plot_roc_curve(lr_model, self.__X_test, self.__y_test)
-        plt.savefig(self.__imgPth + "/" + 'false-true-positives_rate_lrc-best-model.png')
+        plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_lrc-best-model.png')
 
         plt.figure(figsize=(15, 8))
         ax = plt.gca()
         rfc_disp = plot_roc_curve(rfc_model, self.__X_test, self.__y_test, ax=ax, alpha=0.8)
         lrc_plot.plot(ax=ax, alpha=0.8)
         #plt.show()
-        plt.savefig(self.__imgPth + "/" + 'false-true-positives_rate_rfc-best-model.png')
+        plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_rfc-best-model.png')
 
         explainer = shap.TreeExplainer(self.__cv_rfc.best_estimator_)
         shap_values = explainer.shap_values(self.__X_test)
         shap.summary_plot(shap_values, self.__X_test, plot_type="bar")
-        plt.savefig(self.__imgPth + "/" + 'mean_SHAP.png')
+        plt.savefig(self._imgPth + "/" + 'mean_SHAP.png')
 
 
-    def feature_importance_plot(self, model, X_data, output_pth):
+    def feature_importance_plot(self):
         '''
         creates and stores the feature importances in pth
         input:
-                model: model object containing feature_importances_
-                X_data: pandas dataframe of X values
-                output_pth: path to store the figure
-    
+                NoneS
         output:
                 None
         '''
@@ -353,7 +350,7 @@ class churn_predictor:
         indices = np.argsort(importances)[::-1]
         
         # Rearrange feature names so they match the sorted feature importances
-        names = [X.columns[i] for i in indices]
+        names = [self.__X.columns[i] for i in indices]
         
         # Create plot
         plt.figure(figsize=(20,5))
@@ -368,7 +365,7 @@ class churn_predictor:
         # Add feature names as x-axis labels
         plt.xticks(range(self.__X.shape[1]), names, rotation=90);
 
-        plt.savefig(self.__imgPth + "/" + 'features_importance.png')
+        plt.savefig(self._imgPth + "/" + 'features_importance.png')
 
         plt.rc('figure', figsize=(5, 5))
         #plt.text(0.01, 0.05, str(model.summary()), {'fontsize': 12}) old approach
@@ -377,7 +374,7 @@ class churn_predictor:
         plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
         plt.text(0.01, 0.7, str(classification_report(self.__y_train, self.__y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
         plt.axis('off');
-        plt.savefig(self.__imgPth + "/" + 'random_forest.png')
+        plt.savefig(self._imgPth + "/" + 'random_forest.png')
 
         plt.rc('figure', figsize=(5, 5))
         plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
@@ -385,7 +382,7 @@ class churn_predictor:
         plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
         plt.text(0.01, 0.7, str(classification_report(self.__y_test, self.__y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
         plt.axis('off');
-        plt.savefig(self.__imgPth + "/" + 'logistic_regression.png')
+        plt.savefig(self._imgPth + "/" + 'logistic_regression.png')
 
 
     def run(self):
@@ -395,7 +392,7 @@ class churn_predictor:
         self.perform_feature_engineering()
         self.train_models()
         self.classification_report_image()
-        self.feature_importance_plot
+        self.feature_importance_plot()
 
 
 def main():

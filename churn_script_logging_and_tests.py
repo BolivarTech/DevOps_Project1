@@ -33,9 +33,10 @@ class churn_predictor_test(churn_predictor):
             raise err
     
         try:
-            assert self.__df.shape[0] > 0, "Testing import_data: The file \
+            assert hasattr(self,'_df'), f"_df not defined"
+            assert self._df.shape[0] > 0, "Testing import_data: The file \
             doesn't appear to have columns"  
-            assert self.__df.shape[1] > 0, "Testing import_data: The file \
+            assert self._df.shape[1] > 0, "Testing import_data: The file \
             doesn't appear to have rows"
         except AssertionError as err:
             logging.error(err)
@@ -49,7 +50,7 @@ class churn_predictor_test(churn_predictor):
         self.perform_eda()
         
 		# Test that all files were created
-        files = [self.__imgPth + "/" + 'hist-' + i + '.png' for i in range(1,7)]
+        files = [self._imgPth + "/" + 'hist-' + str(i) + '.png' for i in range(1,7)]
         try:
             for file in files:
                 assert exists(file), f"File {file} doen't exist"
@@ -72,12 +73,12 @@ class churn_predictor_test(churn_predictor):
         response='Churn'
 
 		# Original Colums
-        org_colums = list(self.__df.columns)
+        org_colums = list(self._df.columns)
         
         self.encoder_helper(cat_columns, response)
         
 		# Modified Colums
-        new_colums = list(self.__df.columns)
+        new_colums = list(self._df.columns)
         new_cat_columns = [category + "_" + response for category in cat_columns]
         
 		# Tests
@@ -125,7 +126,7 @@ class churn_predictor_test(churn_predictor):
         except AssertionError as err:
             logging.error(err)
 
-  
+
     def run(self):
         '''
         Run the Test
