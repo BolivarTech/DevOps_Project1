@@ -44,7 +44,7 @@ OS_ = 'unknown'
 
 class churn_predictor:
     
-    def __init__(self, pth=None):
+    def __init__(self, pth=None, imgPth='./images', modelsPth='./models'):
         '''
         class constructor
         '''
@@ -56,7 +56,20 @@ class churn_predictor:
         else:
             self.__df = None
             logger.warning(f"NO Dataset File Defined (02)")
+        
+        if imgPth is not None:
+            self.__imgPth = imgPth
+            logger.debug(f"Image Path set to {self.__imgPth} ()")
+        else:
+            self.__imgPth = "."
+            logger.warning(f"Image Path NOT Defined (02)")
 
+        if modelsPth is not None:
+            self.__modelsPth = modelsPth
+            logger.debug(f"Models Path set to {self.__modelsPth} ()")
+        else:
+            self.__modelsPth = "."
+            logger.warning(f"Models Path NOT Defined (02)")
 
     def import_data(self, pth):
         '''
@@ -79,71 +92,232 @@ class churn_predictor:
 
     
     
-    def perform_eda(self, df):
+    def perform_eda(self):
         '''
-        perform eda on df and save figures to images folder
+        perform EDA on df and save figures to images folder
         input:
-                df: pandas dataframe
+                None
     
         output:
                 None
         '''
-    	pass
+        
+        logger.info(f"{self.__df.isnull().sum()}")
+        logger.debug(f"{self.__df.describe()}")
+   
+        cat_columns = [
+            'Gender',
+            'Education_Level',
+            'Marital_Status',
+            'Income_Category',
+            'Card_Category'                
+        ]
+        
+        quant_columns = [
+            'Customer_Age',
+            'Dependent_count', 
+            'Months_on_book',
+            'Total_Relationship_Count', 
+            'Months_Inactive_12_mon',
+            'Contacts_Count_12_mon', 
+            'Credit_Limit', 
+            'Total_Revolving_Bal',
+            'Avg_Open_To_Buy', 
+            'Total_Amt_Chng_Q4_Q1', 
+            'Total_Trans_Amt',
+            'Total_Trans_Ct', 
+            'Total_Ct_Chng_Q4_Q1', 
+            'Avg_Utilization_Ratio'
+        ]
     
-    
-    def encoder_helper(self, df, category_lst, response):
+        self.__df['Churn'] = self.__df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
+
+        plt.figure(figsize=(20,10)) 
+        plot = self.__df['Churn'].hist()
+        # Save the histogram
+        plt.savefig(self.__imgPth + "/" + 'hist-1.png')
+
+        plt.figure(figsize=(20,10)) 
+        plot = self.__df['Customer_Age'].hist()
+        plt.savefig(self.__imgPth + "/" + 'hist-2.png')
+
+        plt.figure(figsize=(20,10)) 
+        plot = self.__df.Marital_Status.value_counts('normalize').plot(kind='bar');
+        plt.savefig(self.__imgPth + "/" + 'hist-3.png')
+
+        plt.figure(figsize=(20,10)) 
+        # distplot is deprecated. Use histplot instead
+        # sns.distplot(df['Total_Trans_Ct']);
+        # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
+        sns.histplot(self.__df['Total_Trans_Ct'], stat='density', kde=True);
+        plt.savefig(self.__imgPth + "/" + 'hist-4.png')
+
+        plt.figure(figsize=(20,10)) 
+        # distplot is deprecated. Use histplot instead
+        # sns.distplot(df['Total_Trans_Ct']);
+        # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
+        sns.histplot(self.__df['Total_Trans_Ct'], stat='density', kde=True);
+        plt.savefig(self.__imgPth + "/" + 'hist-5.png')
+
+        plt.figure(figsize=(20,10)) 
+        sns.heatmap(self.__df.corr(), annot=False, cmap='Dark2_r', linewidths = 2)
+        # plt.show()
+        plt.savefig(self.__imgPth + "/" + 'hist-6.png')
+
+
+    def encoder_helper(self, category_lst, response='Churn'):
         '''
         helper function to turn each categorical column into a new column with
-        propotion of churn for each category - associated with cell 15 from the notebook
+        propotion of churn for each category - associated with cell 16 from the 
+        notebook
     
         input:
-                df: pandas dataframe
                 category_lst: list of columns that contain categorical features
                 response: string of response name [optional argument that could be used for naming variables or index y column]
     
         output:
-                df: pandas dataframe with new columns for
+                df: pandas dataframe with new columns for each category
         '''
-        pass
+        for category in category_lst:
+            groups = self.__df.groupby(category).mean()[response]
+            self.__df[category + "_" + response] = [ groups.loc[val] for val in self.__df[category] ]     
+            return self.__df
     
     
-    def perform_feature_engineering(self, df, response):
+    def perform_feature_engineering(self, response='Churn'):
         '''
         input:
-                  df: pandas dataframe
-                  response: string of response name [optional argument that could be used for naming variables or index y column]
+                response: string of response name [optional argument that could be used for naming variables or index y column]
     
         output:
-                  X_train: X training data
-                  X_test: X testing data
-                  y_train: y training data
-                  y_test: y testing data
+                X_train: X training data
+                X_test: X testing data
+                y_train: y training data
+                y_test: y testing data
         '''
+
+        y = self.__df[response]
+        
+        category_lst = ['Gender', 'Education_Level', 'Marital_Status',
+                        'Income_Category', 'Card_Category']
+        
+        self.encoder_helper(category_lst)
+
+        keep_cols = ['Customer_Age', 'Dependent_count', 'Months_on_book',
+             'Total_Relationship_Count', 'Months_Inactive_12_mon',
+             'Contacts_Count_12_mon', 'Credit_Limit', 'Total_Revolving_Bal',
+             'Avg_Open_To_Buy', 'Total_Amt_Chng_Q4_Q1', 'Total_Trans_Amt',
+             'Total_Trans_Ct', 'Total_Ct_Chng_Q4_Q1', 'Avg_Utilization_Ratio',
+             'Gender_Churn', 'Education_Level_Churn', 'Marital_Status_Churn', 
+             'Income_Category_Churn', 'Card_Category_Churn']
+  
+        self.__X = pd.DataFrame()
+        self.__X[keep_cols] = self.__df[keep_cols]
+        logger.debug(f"{self.__X.head()}")
+        
+        # train test split 
+        self.__X_train,
+        self.__X_test,
+        self.__y_train,
+        self.__y_test = train_test_split(self.__X, y, test_size= 0.3, random_state=42)
+
+        return (self.__X_train, self.__X_test, self.__y_train, self.__y_test)
     
-    def classification_report_image(self,
-                                    y_train,
-                                    y_test,
-                                    y_train_preds_lr,
-                                    y_train_preds_rf,
-                                    y_test_preds_lr,
-                                    y_test_preds_rf):
+
+    def train_models(self):
+        '''
+        train, store model results: images + scores, and store models
+        input:
+                  None
+        output:
+                  None
+        '''
+        
+        # grid search
+        self.__rfc = RandomForestClassifier(random_state=42)
+        # Use a different solver if the default 'lbfgs' fails to converge
+        # Reference: https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+        self.__lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
+        
+        param_grid = { 
+            'n_estimators': [200, 500],
+            'max_features': ['auto', 'sqrt'],
+            'max_depth' : [4,5,100],
+            'criterion' :['gini', 'entropy']
+        }
+        
+        self.__cv_rfc = GridSearchCV(estimator=self.__rfc, param_grid=param_grid, cv=5)
+        self.__cv_rfc.fit(self.__X_train, self.__y_train)
+        
+        self.__lrc.fit(self.__X_train, self.__y_train)
+        
+        self.__y_train_preds_rf = cv_rfc.best_estimator_.predict(self.__X_train)
+        self.__y_test_preds_rf = cv_rfc.best_estimator_.predict(self.__X_test)
+        
+        self.__y_train_preds_lr = self.__lrc.predict(self.__X_train)
+        self.__y_test_preds_lr = self.__lrc.predict(self.__X_test)
+        
+        # scores
+        logout = "random forest results\n"
+        logout += "test results\n"
+        logout += classification_report(self.__y_test, self.__y_test_preds_rf) + "\n"
+        logout += "train results\n"
+        logout += classification_report(self.__y_train, self.__y_train_preds_rf) + "\n"
+        
+        logout += "logistic regression results\n"
+        logout += "test results\n"
+        logout += classification_report(self.__y_test, self.__y_test_preds_lr) + "\n"
+        logout += "train results\n"
+        logout += classification_report(self.__y_train, self.__y_train_preds_lr) + "\n"
+
+        logger.info(logout)
+
+        # save best model
+        joblib.dump(self.__cv_rfc.best_estimator_, self.__modelsPth + '/rfc_model.pkl')
+        joblib.dump(self.__lrc, self.__modelsPth + '/logistic_model.pkl')
+    
+
+    def classification_report_image(self):
         '''
         produces classification report for training and testing results and stores report as image
         in images folder
         input:
-                y_train: training response values
-                y_test:  test response values
-                y_train_preds_lr: training predictions from logistic regression
-                y_train_preds_rf: training predictions from random forest
-                y_test_preds_lr: test predictions from logistic regression
-                y_test_preds_rf: test predictions from random forest
+                None
     
         output:
                  None
         '''
-        pass
-    
-    
+        
+        lrc_plot = plot_roc_curve(self.__lrc, self.__X_test, self.__y_test)
+        plt.savefig(self.__imgPth + "/" + 'false-true-positives_rate_lrc.png')
+        
+        plt.figure(figsize=(15, 8))
+        ax = plt.gca()
+        rfc_disp = plot_roc_curve(self.__cv_rfc.best_estimator_, self.__X_test, self.__y_test, ax=ax, alpha=0.8)
+        lrc_plot.plot(ax=ax, alpha=0.8)
+        #plt.show()
+        plt.savefig(self.__imgPth + "/" + 'false-true-positives_rate_rfc.png')
+
+        # Test Saved Models
+        rfc_model = joblib.load(self.__modelsPth + '/rfc_model.pkl')
+        lr_model = joblib.load(self.__modelsPth + '/logistic_model.pkl')
+
+        lrc_plot = plot_roc_curve(lr_model, self.__X_test, self.__y_test)
+        plt.savefig(self.__imgPth + "/" + 'false-true-positives_rate_lrc-best-model.png')
+
+        plt.figure(figsize=(15, 8))
+        ax = plt.gca()
+        rfc_disp = plot_roc_curve(rfc_model, self.__X_test, self.__y_test, ax=ax, alpha=0.8)
+        lrc_plot.plot(ax=ax, alpha=0.8)
+        #plt.show()
+        plt.savefig(self.__imgPth + "/" + 'false-true-positives_rate_rfc-best-model.png')
+
+        explainer = shap.TreeExplainer(self.__cv_rfc.best_estimator_)
+        shap_values = explainer.shap_values(self.__X_test)
+        shap.summary_plot(shap_values, self.__X_test, plot_type="bar")
+        plt.savefig(self.__imgPth + "/" + 'mean_SHAP.png')
+
+
     def feature_importance_plot(self, model, X_data, output_pth):
         '''
         creates and stores the feature importances in pth
@@ -155,31 +329,62 @@ class churn_predictor:
         output:
                  None
         '''
-        pass
-    
-    def train_models(self, X_train, X_test, y_train, y_test):
-        '''
-        train, store model results: images + scores, and store models
-        input:
-                  X_train: X training data
-                  X_test: X testing data
-                  y_train: y training data
-                  y_test: y testing data
-        output:
-                  None
-        '''
-        pass
-    
+        
+        # Calculate feature importances
+        importances = self.__cv_rfc.best_estimator_.feature_importances_
+        # Sort feature importances in descending order
+        indices = np.argsort(importances)[::-1]
+        
+        # Rearrange feature names so they match the sorted feature importances
+        names = [X.columns[i] for i in indices]
+        
+        # Create plot
+        plt.figure(figsize=(20,5))
+        
+        # Create plot title
+        plt.title("Feature Importance")
+        plt.ylabel('Importance')
+        
+        # Add bars
+        plt.bar(range(self.__X.shape[1]), importances[indices])
+        
+        # Add feature names as x-axis labels
+        plt.xticks(range(self.__X.shape[1]), names, rotation=90);
+ 
+        plt.savefig(self.__imgPth + "/" + 'features_importance.png')
+
+        plt.rc('figure', figsize=(5, 5))
+        #plt.text(0.01, 0.05, str(model.summary()), {'fontsize': 12}) old approach
+        plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10}, fontproperties = 'monospace')
+        plt.text(0.01, 0.05, str(classification_report(self.__y_test, self.__y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+        plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
+        plt.text(0.01, 0.7, str(classification_report(self.__y_train, self.__y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+        plt.axis('off');
+        plt.savefig(self.__imgPth + "/" + 'random_forest.png')
+
+        plt.rc('figure', figsize=(5, 5))
+        plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
+        plt.text(0.01, 0.05, str(classification_report(self.__y_train, self.__y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+        plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
+        plt.text(0.01, 0.7, str(classification_report(self.__y_test, self.__y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+        plt.axis('off');
+        plt.savefig(self.__imgPth + "/" + 'logistic_regression.png')
+
+
     def run(self):
         '''
         '''
-        pass
+        self.perform_eda()
+        self.perform_feature_engineering()
+        self.train_models()
+        self.classification_report_image()
+        self.feature_importance_plot
+
 
 def main():
-    """
-     Run the main script function
-
-    """
+    '''
+    Run the main script function
+    '''
     churnPred = churn_predictor()
     churnPred.run()
 
