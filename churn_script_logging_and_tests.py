@@ -13,7 +13,7 @@ from churn_library import churn_predictor
 # Main Logger Environment 
 logHandler = None
 logger = None
-logLevel_ = logging.INFO
+logLevel_ = logging.DEBUG
 logFileName = 'churn_library_test.log'
 
 class churn_predictor_test(churn_predictor):
@@ -103,10 +103,10 @@ class churn_predictor_test(churn_predictor):
         
 		# Tests
         try: 
-            assert hasattr(self,'__X_train'), f"__X_train not defined"
-            assert hasattr(self,'__X_test'), f"__X_test not defined"
-            assert hasattr(self,'__y_train'), f"__y_train not defined"
-            assert hasattr(self,'__y_test'), f"__y_test not defined"
+            assert hasattr(self,'_X_train'), f"_X_train not defined"
+            assert hasattr(self,'_X_test'), f"_X_test not defined"
+            assert hasattr(self,'_Y_train'), f"_Y_train not defined"
+            assert hasattr(self,'_Y_test'), f"_Y_test not defined"
         except AssertionError as err:
             logging.error(err)
     
@@ -119,7 +119,7 @@ class churn_predictor_test(churn_predictor):
         self.train_models()
         
 		# Test that all files were created
-        files = [self.__modelsPth + '/rfc_model.pkl', self.__modelsPth + '/logistic_model.pkl']
+        files = [self._modelsPth + '/rfc_model.pkl', self._modelsPth + '/logistic_model.pkl']
         try:
             for file in files:
                 assert exists(file), f"File {file} doen't exist"

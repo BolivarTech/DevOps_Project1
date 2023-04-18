@@ -36,7 +36,7 @@ os.environ['QT_QPA_PLATFORM']='offscreen'
 # Main Logger Environment 
 logHandler = None
 logger = None
-logLevel_ = logging.INFO
+logLevel_ = logging.DEBUG
 logFileName = 'churn_library.log'
 
 # OS running
@@ -83,10 +83,10 @@ class churn_predictor:
             self.__logger.warning(f"Image Path NOT Defined (02)")
 
         if modelsPth is not None:
-            self.__modelsPth = modelsPth
-            self.__logger.debug(f"Models Path set to {self.__modelsPth} ()")
+            self._modelsPth = modelsPth
+            self.__logger.debug(f"Models Path set to {self._modelsPth} ()")
         else:
-            self.__modelsPth = "."
+            self._modelsPth = "."
             self.__logger.warning(f"Models Path NOT Defined (02)")
 
     def import_data(self, pth):
@@ -196,7 +196,8 @@ class churn_predictor:
         for category in category_lst:
             groups = self._df.groupby(category).mean()[response]
             self._df[category + "_" + response] = [ groups.loc[val] for val in self._df[category] ]     
-            return self._df
+        
+        return self._df
     
     
     def perform_feature_engineering(self, response='Churn'):
@@ -228,17 +229,17 @@ class churn_predictor:
                     'Education_Level_Churn', 'Marital_Status_Churn', 
                     'Income_Category_Churn', 'Card_Category_Churn']
 
-        self.__X = pd.DataFrame()
-        self.__X[keep_cols] = self._df[keep_cols]
-        self.__logger.debug(f"{self.__X.head()}")
+        self._X = pd.DataFrame()
+        self._X[keep_cols] = self._df[keep_cols]
+        self.__logger.debug(f"{self._X.head()}")
         
         # train test split 
-        self.__X_train,
-        self.__X_test,
-        self.__y_train,
-        self.__y_test = train_test_split(self.__X, y, test_size= 0.3, random_state=42)
+        self._X_train, \
+        self._X_test, \
+        self._Y_train, \
+        self._Y_test = train_test_split(self._X, y, test_size= 0.3, random_state=42)
 
-        return (self.__X_train, self.__X_test, self.__y_train, self.__y_test)
+        return (self._X_train, self._X_test, self._Y_train, self._Y_test)
     
 
     def train_models(self):
@@ -264,34 +265,34 @@ class churn_predictor:
         }
         
         self.__cv_rfc = GridSearchCV(estimator=self.__rfc, param_grid=param_grid, cv=5)
-        self.__cv_rfc.fit(self.__X_train, self.__y_train)
+        self.__cv_rfc.fit(self._X_train, self._Y_train)
         
-        self.__lrc.fit(self.__X_train, self.__y_train)
+        self.__lrc.fit(self._X_train, self._Y_train)
         
-        self.__y_train_preds_rf = self.__cv_rfc.best_estimator_.predict(self.__X_train)
-        self.__y_test_preds_rf = self.__cv_rfc.best_estimator_.predict(self.__X_test)
+        self._Y_train_preds_rf = self.__cv_rfc.best_estimator_.predict(self._X_train)
+        self._Y_test_preds_rf = self.__cv_rfc.best_estimator_.predict(self._X_test)
         
-        self.__y_train_preds_lr = self.__lrc.predict(self.__X_train)
-        self.__y_test_preds_lr = self.__lrc.predict(self.__X_test)
+        self._Y_train_preds_lr = self.__lrc.predict(self._X_train)
+        self._Y_test_preds_lr = self.__lrc.predict(self._X_test)
         
         # scores
         logout = "random forest results\n"
         logout += "test results\n"
-        logout += classification_report(self.__y_test, self.__y_test_preds_rf) + "\n"
+        logout += classification_report(self._Y_test, self._Y_test_preds_rf) + "\n"
         logout += "train results\n"
-        logout += classification_report(self.__y_train, self.__y_train_preds_rf) + "\n"
+        logout += classification_report(self._Y_train, self._Y_train_preds_rf) + "\n"
         
         logout += "logistic regression results\n"
         logout += "test results\n"
-        logout += classification_report(self.__y_test, self.__y_test_preds_lr) + "\n"
+        logout += classification_report(self._Y_test, self._Y_test_preds_lr) + "\n"
         logout += "train results\n"
-        logout += classification_report(self.__y_train, self.__y_train_preds_lr) + "\n"
+        logout += classification_report(self._Y_train, self._Y_train_preds_lr) + "\n"
 
         self.__logger.info(logout)
 
         # save best model
-        joblib.dump(self.__cv_rfc.best_estimator_, self.__modelsPth + '/rfc_model.pkl')
-        joblib.dump(self.__lrc, self.__modelsPth + '/logistic_model.pkl')
+        joblib.dump(self.__cv_rfc.best_estimator_, self._modelsPth + '/rfc_model.pkl')
+        joblib.dump(self.__lrc, self._modelsPth + '/logistic_model.pkl')
     
 
     def classification_report_image(self):
@@ -305,33 +306,33 @@ class churn_predictor:
                 None
         '''
         
-        lrc_plot = plot_roc_curve(self.__lrc, self.__X_test, self.__y_test)
+        lrc_plot = plot_roc_curve(self.__lrc, self._X_test, self._Y_test)
         plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_lrc.png')
         
         plt.figure(figsize=(15, 8))
         ax = plt.gca()
-        rfc_disp = plot_roc_curve(self.__cv_rfc.best_estimator_, self.__X_test, self.__y_test, ax=ax, alpha=0.8)
+        rfc_disp = plot_roc_curve(self.__cv_rfc.best_estimator_, self._X_test, self._Y_test, ax=ax, alpha=0.8)
         lrc_plot.plot(ax=ax, alpha=0.8)
         #plt.show()
         plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_rfc.png')
 
         # Test Saved Models
-        rfc_model = joblib.load(self.__modelsPth + '/rfc_model.pkl')
-        lr_model = joblib.load(self.__modelsPth + '/logistic_model.pkl')
+        rfc_model = joblib.load(self._modelsPth + '/rfc_model.pkl')
+        lr_model = joblib.load(self._modelsPth + '/logistic_model.pkl')
 
-        lrc_plot = plot_roc_curve(lr_model, self.__X_test, self.__y_test)
+        lrc_plot = plot_roc_curve(lr_model, self._X_test, self._Y_test)
         plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_lrc-best-model.png')
 
         plt.figure(figsize=(15, 8))
         ax = plt.gca()
-        rfc_disp = plot_roc_curve(rfc_model, self.__X_test, self.__y_test, ax=ax, alpha=0.8)
+        rfc_disp = plot_roc_curve(rfc_model, self._X_test, self._Y_test, ax=ax, alpha=0.8)
         lrc_plot.plot(ax=ax, alpha=0.8)
         #plt.show()
         plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_rfc-best-model.png')
 
         explainer = shap.TreeExplainer(self.__cv_rfc.best_estimator_)
-        shap_values = explainer.shap_values(self.__X_test)
-        shap.summary_plot(shap_values, self.__X_test, plot_type="bar")
+        shap_values = explainer.shap_values(self._X_test)
+        shap.summary_plot(shap_values, self._X_test, plot_type="bar")
         plt.savefig(self._imgPth + "/" + 'mean_SHAP.png')
 
 
@@ -350,7 +351,7 @@ class churn_predictor:
         indices = np.argsort(importances)[::-1]
         
         # Rearrange feature names so they match the sorted feature importances
-        names = [self.__X.columns[i] for i in indices]
+        names = [self._X.columns[i] for i in indices]
         
         # Create plot
         plt.figure(figsize=(20,5))
@@ -360,27 +361,27 @@ class churn_predictor:
         plt.ylabel('Importance')
         
         # Add bars
-        plt.bar(range(self.__X.shape[1]), importances[indices])
+        plt.bar(range(self._X.shape[1]), importances[indices])
         
         # Add feature names as x-axis labels
-        plt.xticks(range(self.__X.shape[1]), names, rotation=90);
+        plt.xticks(range(self._X.shape[1]), names, rotation=90);
 
         plt.savefig(self._imgPth + "/" + 'features_importance.png')
 
         plt.rc('figure', figsize=(5, 5))
         #plt.text(0.01, 0.05, str(model.summary()), {'fontsize': 12}) old approach
         plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10}, fontproperties = 'monospace')
-        plt.text(0.01, 0.05, str(classification_report(self.__y_test, self.__y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+        plt.text(0.01, 0.05, str(classification_report(self._Y_test, self._Y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
         plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
-        plt.text(0.01, 0.7, str(classification_report(self.__y_train, self.__y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+        plt.text(0.01, 0.7, str(classification_report(self._Y_train, self._Y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
         plt.axis('off');
         plt.savefig(self._imgPth + "/" + 'random_forest.png')
 
         plt.rc('figure', figsize=(5, 5))
         plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
-        plt.text(0.01, 0.05, str(classification_report(self.__y_train, self.__y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+        plt.text(0.01, 0.05, str(classification_report(self._Y_train, self._Y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
         plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
-        plt.text(0.01, 0.7, str(classification_report(self.__y_test, self.__y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
+        plt.text(0.01, 0.7, str(classification_report(self._Y_test, self._Y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
         plt.axis('off');
         plt.savefig(self._imgPth + "/" + 'logistic_regression.png')
 
