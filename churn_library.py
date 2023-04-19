@@ -52,42 +52,42 @@ class churn_predictor:
         global logLevel_
 
         # Set the error logger
-        self.__logger = log.getLogger('churn_predictor_class')
+        self._logger = log.getLogger('churn_predictor_class')
         # Add handler to logger
         self.__logHandler = log_handler
         if self.__logHandler is not None:
-            self.__logger.addHandler(self.__logHandler)
+            self._logger.addHandler(self.__logHandler)
         else:
-            self.__logger.debug(f"logHandler NOT defined (001)")
+            self._logger.debug(f"logHandler NOT defined (001)")
         # Set Logger Lever
-        self.__logger.setLevel(logLevel_)
+        self._logger.setLevel(logLevel_)
 
 
         if dataPth is not None:
             try:
                 self._df = pd.read_csv(dataPth)
             except FileNotFoundError as err:
-                self.__logger.error(err)
+                self._logger.error(err)
             else:
-                self.__logger.info(f"File {dataPth} loaded with shape {self._df.shape} (01)")
-                self.__logger.debug(f"{self._df.head()}")
+                self._logger.info(f"File {dataPth} loaded with shape {self._df.shape} (01)")
+                self._logger.debug(f"{self._df.head()}")
         else:
             self._df = None
-            self.__logger.warning(f"NO Dataset File Defined (02)")
+            self._logger.warning(f"NO Dataset File Defined (02)")
         
         if imgPth is not None:
             self._imgPth = imgPth
-            self.__logger.debug(f"Image Path set to {self._imgPth} ()")
+            self._logger.debug(f"Image Path set to {self._imgPth} ()")
         else:
             self._imgPth = "."
-            self.__logger.warning(f"Image Path NOT Defined (02)")
+            self._logger.warning(f"Image Path NOT Defined (02)")
 
         if modelsPth is not None:
             self._modelsPth = modelsPth
-            self.__logger.debug(f"Models Path set to {self._modelsPth} ()")
+            self._logger.debug(f"Models Path set to {self._modelsPth} ()")
         else:
             self._modelsPth = "."
-            self.__logger.warning(f"Models Path NOT Defined (02)")
+            self._logger.warning(f"Models Path NOT Defined (02)")
 
     def import_data(self, pth):
         '''
@@ -103,14 +103,14 @@ class churn_predictor:
             try:
                 self._df = pd.read_csv(pth)
             except FileNotFoundError as err:
-                self.__logger.error(err)
+                self._logger.error(err)
                 raise err
             else:
-                self.__logger.info(f"File {pth} loaded with shape {self._df.shape} (03)")
-                self.__logger.debug(f"{self._df.head()}")
+                self._logger.info(f"File {pth} loaded with shape {self._df.shape} (03)")
+                self._logger.debug(f"{self._df.head()}")
         else:
             self._df = None
-            self.__logger.warning(f"NO Dataset File Defined (04)")
+            self._logger.warning(f"NO Dataset File Defined (04)")
         return self._df
 
     
@@ -125,25 +125,25 @@ class churn_predictor:
                 None
         '''
         
-        self.__logger.info(f"{self._df.isnull().sum()}")
-        self.__logger.debug(f"{self._df.describe()}")
+        self._logger.info(f"{self._df.isnull().sum()}")
+        self._logger.debug(f"{self._df.describe()}")
 
-        quant_columns = [
-            'Customer_Age',
-            'Dependent_count', 
-            'Months_on_book',
-            'Total_Relationship_Count', 
-            'Months_Inactive_12_mon',
-            'Contacts_Count_12_mon', 
-            'Credit_Limit', 
-            'Total_Revolving_Bal',
-            'Avg_Open_To_Buy', 
-            'Total_Amt_Chng_Q4_Q1', 
-            'Total_Trans_Amt',
-            'Total_Trans_Ct', 
-            'Total_Ct_Chng_Q4_Q1', 
-            'Avg_Utilization_Ratio'
-        ]
+        # quant_columns = [
+        #     'Customer_Age',
+        #     'Dependent_count', 
+        #     'Months_on_book',
+        #     'Total_Relationship_Count', 
+        #     'Months_Inactive_12_mon',
+        #     'Contacts_Count_12_mon', 
+        #     'Credit_Limit', 
+        #     'Total_Revolving_Bal',
+        #     'Avg_Open_To_Buy', 
+        #     'Total_Amt_Chng_Q4_Q1', 
+        #     'Total_Trans_Amt',
+        #     'Total_Trans_Ct', 
+        #     'Total_Ct_Chng_Q4_Q1', 
+        #     'Avg_Utilization_Ratio'
+        # ]
     
         self._df['Churn'] = self._df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
 
@@ -231,7 +231,7 @@ class churn_predictor:
 
         self._X = pd.DataFrame()
         self._X[keep_cols] = self._df[keep_cols]
-        self.__logger.debug(f"{self._X.head()}")
+        self._logger.debug(f"{self._X.head()}")
         
         # train test split 
         self._X_train, \
@@ -251,6 +251,7 @@ class churn_predictor:
                 None
         '''
         
+        self._logger.info(f"Training Begining")
         # grid search
         self.__rfc = RandomForestClassifier(random_state=42)
         # Use a different solver if the default 'lbfgs' fails to converge
@@ -288,12 +289,13 @@ class churn_predictor:
         logout += "train results\n"
         logout += classification_report(self._Y_train, self._Y_train_preds_lr) + "\n"
 
-        self.__logger.info(logout)
+        self._logger.info(logout)
 
         # save best model
         joblib.dump(self.__cv_rfc.best_estimator_, self._modelsPth + '/rfc_model.pkl')
         joblib.dump(self.__lrc, self._modelsPth + '/logistic_model.pkl')
-    
+        self._logger.info(f"Training Finished")
+
 
     def classification_report_image(self):
         '''
@@ -311,7 +313,7 @@ class churn_predictor:
         
         plt.figure(figsize=(15, 8))
         ax = plt.gca()
-        rfc_disp = plot_roc_curve(self.__cv_rfc.best_estimator_, self._X_test, self._Y_test, ax=ax, alpha=0.8)
+        # rfc_disp = plot_roc_curve(self.__cv_rfc.best_estimator_, self._X_test, self._Y_test, ax=ax, alpha=0.8)
         lrc_plot.plot(ax=ax, alpha=0.8)
         #plt.show()
         plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_rfc.png')
@@ -325,15 +327,17 @@ class churn_predictor:
 
         plt.figure(figsize=(15, 8))
         ax = plt.gca()
-        rfc_disp = plot_roc_curve(rfc_model, self._X_test, self._Y_test, ax=ax, alpha=0.8)
+        # rfc_disp = plot_roc_curve(rfc_model, self._X_test, self._Y_test, ax=ax, alpha=0.8)
         lrc_plot.plot(ax=ax, alpha=0.8)
         #plt.show()
         plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_rfc-best-model.png')
 
+        self._logger.debug("to run Mean Shap")
         explainer = shap.TreeExplainer(self.__cv_rfc.best_estimator_)
         shap_values = explainer.shap_values(self._X_test)
         shap.summary_plot(shap_values, self._X_test, plot_type="bar")
         plt.savefig(self._imgPth + "/" + 'mean_SHAP.png')
+        self._logger.debug("Mean Shap done")
 
 
     def feature_importance_plot(self):

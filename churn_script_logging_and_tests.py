@@ -21,6 +21,22 @@ class churn_predictor_test(churn_predictor):
     Class that perform the churn predictor's test
     '''
 
+    def _test_files_exist(self, files, testName='None'):
+        '''
+        Test if files list exist
+        '''
+
+        try:
+            for file in files:
+                assert exists(file), f"File {file} doen't exist"
+        except AssertionError as err:
+            logging.error(err)
+        else:
+            msg = f"Test {testName} Passed"
+            print(msg)
+            logging.info(msg)
+
+
     def test_import(self):
         '''
         test data import - this example is completed for you to assist with the other test functions
@@ -31,6 +47,10 @@ class churn_predictor_test(churn_predictor):
         except FileNotFoundError as err:
             logging.error("Testing import_eda: The file wasn't found\n {err}")
             raise err
+        else:
+            msg = f"Test Import Passed"
+            print(msg)
+            logging.info(msg)
     
         try:
             assert hasattr(self,'_df'), f"_df not defined"
@@ -41,7 +61,10 @@ class churn_predictor_test(churn_predictor):
         except AssertionError as err:
             logging.error(err)
             raise err
-    
+        else:
+            msg = f"Test _df Passed"
+            print(msg)
+            logging.info(msg)
     
     def test_eda(self):
         '''
@@ -50,12 +73,9 @@ class churn_predictor_test(churn_predictor):
         self.perform_eda()
         
 		# Test that all files were created
-        files = [self._imgPth + "/" + 'hist-' + str(i) + '.png' for i in range(1,7)]
-        try:
-            for file in files:
-                assert exists(file), f"File {file} doen't exist"
-        except AssertionError as err:
-            logging.error(err)
+        files = [self._imgPth + "/" + 'hist-' + str(i) + '.png' \
+                for i in range(1,7)]
+        self._test_files_exist(files,testName='eda')
     
     
     def test_encoder_helper(self):
@@ -91,7 +111,10 @@ class churn_predictor_test(churn_predictor):
                     {new_colums}"
         except AssertionError as err:
             logging.error(err)
-    
+        else:
+            msg = f"Test encoder_helper Passed"
+            print(msg)
+            logging.info(msg)
 
     
     def test_perform_feature_engineering(self):
@@ -109,7 +132,10 @@ class churn_predictor_test(churn_predictor):
             assert hasattr(self,'_Y_test'), f"_Y_test not defined"
         except AssertionError as err:
             logging.error(err)
-    
+        else:
+            msg = f"Test feature_engineering Passed"
+            print(msg)
+            logging.info(msg)
     
     def test_train_models(self):
         '''
@@ -119,13 +145,44 @@ class churn_predictor_test(churn_predictor):
         self.train_models()
         
 		# Test that all files were created
-        files = [self._modelsPth + '/rfc_model.pkl', self._modelsPth + '/logistic_model.pkl']
-        try:
-            for file in files:
-                assert exists(file), f"File {file} doen't exist"
-        except AssertionError as err:
-            logging.error(err)
+        files = [self._modelsPth + '/rfc_model.pkl', 
+                self._modelsPth + '/logistic_model.pkl']
+        self._test_files_exist(files,testName='train_model')
+        
 
+    def test_classification_report_image(self):
+        '''
+        Test if classification images reports where created
+        '''
+
+        self.classification_report_image()
+
+        # Test that all files were created
+        files = [self._imgPth + "/" + 'false-true-positives_rate_lrc.png',
+                self._imgPth + "/" + 'false-true-positives_rate_rfc.png',
+                self._imgPth + "/" 
+                + 'false-true-positives_rate_lrc-best-model.png',
+                self._imgPth + "/" 
+                + 'false-true-positives_rate_rfc-best-model.png',
+                self._imgPth + "/" + 'mean_SHAP.png'
+                ]
+        self._test_files_exist(files, testName='classification_report_images')
+
+
+    def test_feature_importance_plot(self):
+        '''
+        Test if feature importaace plors where created
+        '''
+
+        self.feature_importance_plot()
+
+        # Test that all files were created
+        files = [self._imgPth + "/" + 'features_importance.png',
+                self._imgPth + "/" + 'random_forest.png',
+                self._imgPth + "/" + 'logistic_regression.png'
+                ]
+        self._test_files_exist(files, testName='feature_importance_plot')
+        
 
     def run(self):
         '''
@@ -137,7 +194,8 @@ class churn_predictor_test(churn_predictor):
         self.test_encoder_helper()
         self.test_perform_feature_engineering()
         self.test_train_models()
-
+        self.test_classification_report_image()
+        self.test_feature_importance_plot()
 
 if __name__ == "__main__":
 	# logging.basicConfig(
