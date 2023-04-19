@@ -13,7 +13,7 @@ from churn_library import churn_predictor
 # Main Logger Environment 
 logHandler = None
 logger = None
-logLevel_ = logging.DEBUG
+logLevel_ = logging.INFO
 logFileName = 'churn_library_test.log'
 
 class churn_predictor_test(churn_predictor):

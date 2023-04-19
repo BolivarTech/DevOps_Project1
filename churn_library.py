@@ -36,7 +36,7 @@ os.environ['QT_QPA_PLATFORM']='offscreen'
 # Main Logger Environment 
 logHandler = None
 logger = None
-logLevel_ = logging.DEBUG
+logLevel_ = logging.INFO
 logFileName = 'churn_library.log'
 
 # OS running
@@ -334,8 +334,11 @@ class churn_predictor:
 
         self._logger.debug("to run Mean Shap")
         explainer = shap.TreeExplainer(self.__cv_rfc.best_estimator_)
+        self._logger.debug("to get Shap values")
         shap_values = explainer.shap_values(self._X_test)
-        shap.summary_plot(shap_values, self._X_test, plot_type="bar")
+        self._logger.debug("to Plot Mean Shap")
+        shap.summary_plot(shap_values, self._X_test, plot_type="bar", show=False)
+        self._logger.debug("to save plot Mean Shap")
         plt.savefig(self._imgPth + "/" + 'mean_SHAP.png')
         self._logger.debug("Mean Shap done")
 
