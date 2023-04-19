@@ -4,7 +4,6 @@ This library provide Customer Churn Predictions based on model
 Author: Julian Bolvar
 Version: 1.0.0
 Date history:  2023-04-16  Base code
-
 '''
 # library doc string
 import shap
@@ -43,10 +42,19 @@ logFileName = 'churn_library.log'
 OS_ = 'unknown'
 
 class churn_predictor:
-    
-    def __init__(self, dataPth, imgPth='./images', modelsPth='./models', log_handler=None):
+    '''
+    Class that implements the Churn Predictor algorimts
+    '''
+
+    def __init__(self, dataPth, imgPth='./images', modelsPth='./models', \
+                log_handler=None):
         '''
         class constructor
+
+        Inputs: 
+            imgPth (str): Path where the images are going to be saved
+            modelsPth (str): Path where models are going to be saved
+            log_handler: Loggin manager handdler
         '''
         
         global logLevel_
@@ -69,32 +77,34 @@ class churn_predictor:
             except FileNotFoundError as err:
                 self._logger.error(err)
             else:
-                self._logger.info(f"File {dataPth} loaded with shape {self._df.shape} (01)")
+                self._logger.info(f"File {dataPth} loaded with \
+                                    shape {self._df.shape} (002)")
                 self._logger.debug(f"{self._df.head()}")
         else:
             self._df = None
-            self._logger.warning(f"NO Dataset File Defined (02)")
+            self._logger.warning(f"NO Dataset File Defined (003)")
         
         if imgPth is not None:
             self._imgPth = imgPth
-            self._logger.debug(f"Image Path set to {self._imgPth} ()")
+            self._logger.debug(f"Image Path set to {self._imgPth} (004)")
         else:
             self._imgPth = "."
-            self._logger.warning(f"Image Path NOT Defined (02)")
+            self._logger.warning(f"Image Path NOT Defined (005)")
 
         if modelsPth is not None:
             self._modelsPth = modelsPth
-            self._logger.debug(f"Models Path set to {self._modelsPth} ()")
+            self._logger.debug(f"Models Path set to {self._modelsPth} (006)")
         else:
             self._modelsPth = "."
-            self._logger.warning(f"Models Path NOT Defined (02)")
+            self._logger.warning(f"Models Path NOT Defined (007)")
+
 
     def import_data(self, pth):
         '''
         returns dataframe for the csv found at pth
     
         input:
-                pth: a path to the csv
+                pth (str): a path to the csv
         output:
                 df: pandas dataframe
         '''	
@@ -103,14 +113,15 @@ class churn_predictor:
             try:
                 self._df = pd.read_csv(pth)
             except FileNotFoundError as err:
-                self._logger.error(err)
+                self._logger.error(f"{err} (008)")
                 raise err
             else:
-                self._logger.info(f"File {pth} loaded with shape {self._df.shape} (03)")
-                self._logger.debug(f"{self._df.head()}")
+                self._logger.info(f"File {pth} loaded with \
+                                    shape {self._df.shape} (009)")
+                self._logger.debug(f"{self._df.head()}  (010)")
         else:
             self._df = None
-            self._logger.warning(f"NO Dataset File Defined (04)")
+            self._logger.warning(f"NO Dataset File Defined (011)")
         return self._df
 
     
@@ -125,27 +136,12 @@ class churn_predictor:
                 None
         '''
         
-        self._logger.info(f"{self._df.isnull().sum()}")
-        self._logger.debug(f"{self._df.describe()}")
+        self._logger.info(f"{self._df.isnull().sum()} (012)")
+        self._logger.debug(f"{self._df.describe()}  (013)")
 
-        # quant_columns = [
-        #     'Customer_Age',
-        #     'Dependent_count', 
-        #     'Months_on_book',
-        #     'Total_Relationship_Count', 
-        #     'Months_Inactive_12_mon',
-        #     'Contacts_Count_12_mon', 
-        #     'Credit_Limit', 
-        #     'Total_Revolving_Bal',
-        #     'Avg_Open_To_Buy', 
-        #     'Total_Amt_Chng_Q4_Q1', 
-        #     'Total_Trans_Amt',
-        #     'Total_Trans_Ct', 
-        #     'Total_Ct_Chng_Q4_Q1', 
-        #     'Avg_Utilization_Ratio'
-        # ]
-    
-        self._df['Churn'] = self._df['Attrition_Flag'].apply(lambda val: 0 if val == "Existing Customer" else 1)
+        self._df['Churn'] = self._df['Attrition_Flag']. \
+                            apply(lambda val: 0 if val == "Existing Customer" 
+                                    else 1)
 
         plt.figure(figsize=(20,10)) 
         plot = self._df['Churn'].hist()
@@ -157,20 +153,23 @@ class churn_predictor:
         plt.savefig(self._imgPth + "/" + 'hist-2.png')
 
         plt.figure(figsize=(20,10)) 
-        plot = self._df.Marital_Status.value_counts('normalize').plot(kind='bar');
+        plot = self._df.Marital_Status.value_counts('normalize') \
+                .plot(kind='bar');
         plt.savefig(self._imgPth + "/" + 'hist-3.png')
 
         plt.figure(figsize=(20,10)) 
         # distplot is deprecated. Use histplot instead
         # sns.distplot(df['Total_Trans_Ct']);
-        # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
-        sns.histplot(self._df['Total_Trans_Ct'], stat='density', kde=True);
+        # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained
+        # using a kernel density estimate
+        sns.histplot(self._df['Total_Trans_Ct'], stat='density', kde=True)
         plt.savefig(self._imgPth + "/" + 'hist-4.png')
 
         plt.figure(figsize=(20,10)) 
         # distplot is deprecated. Use histplot instead
         # sns.distplot(df['Total_Trans_Ct']);
-        # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained using a kernel density estimate
+        # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained
+        # using a kernel density estimate
         sns.histplot(self._df['Total_Trans_Ct'], stat='density', kde=True);
         plt.savefig(self._imgPth + "/" + 'hist-5.png')
 
@@ -188,14 +187,16 @@ class churn_predictor:
     
         input:
                 category_lst: list of columns that contain categorical features
-                response: string of response name [optional argument that could be used for naming variables or index y column]
+                response: string of response name [optional argument that could
+                        be used for naming variables or index y column]
     
         output:
                 df: pandas dataframe with new columns for each category
         '''
         for category in category_lst:
             groups = self._df.groupby(category).mean()[response]
-            self._df[category + "_" + response] = [ groups.loc[val] for val in self._df[category] ]     
+            self._df[category + "_" + response] = [ groups.loc[val] for val in \
+                                                    self._df[category] ]     
         
         return self._df
     
@@ -203,7 +204,8 @@ class churn_predictor:
     def perform_feature_engineering(self, response='Churn'):
         '''
         input:
-                response: string of response name [optional argument that could be used for naming variables or index y column]
+                response: string of response name [optional argument that could
+                        be used for naming variables or index y column]
     
         output:
                 X_train: X training data
@@ -231,13 +233,14 @@ class churn_predictor:
 
         self._X = pd.DataFrame()
         self._X[keep_cols] = self._df[keep_cols]
-        self._logger.debug(f"{self._X.head()}")
+        self._logger.debug(f"{self._X.head()} (014)")
         
         # train test split 
         self._X_train, \
         self._X_test, \
         self._Y_train, \
-        self._Y_test = train_test_split(self._X, y, test_size= 0.3, random_state=42)
+        self._Y_test = train_test_split(self._X, y, test_size= 0.3, 
+                                        random_state=42)
 
         return (self._X_train, self._X_test, self._Y_train, self._Y_test)
     
@@ -251,11 +254,12 @@ class churn_predictor:
                 None
         '''
         
-        self._logger.info(f"Training Begining")
+        self._logger.info(f"Training Begining (015)")
         # grid search
         self.__rfc = RandomForestClassifier(random_state=42)
         # Use a different solver if the default 'lbfgs' fails to converge
-        # Reference: https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
+        # Reference: https://scikit-learn.org/stable/modules/linear_model.html
+        # logistic-regression
         self.__lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
         
         param_grid = { 
@@ -265,13 +269,16 @@ class churn_predictor:
             'criterion' :['gini', 'entropy']
         }
         
-        self.__cv_rfc = GridSearchCV(estimator=self.__rfc, param_grid=param_grid, cv=5)
+        self.__cv_rfc = GridSearchCV(estimator=self.__rfc,
+                                    param_grid=param_grid, cv=5)
         self.__cv_rfc.fit(self._X_train, self._Y_train)
         
         self.__lrc.fit(self._X_train, self._Y_train)
         
-        self._Y_train_preds_rf = self.__cv_rfc.best_estimator_.predict(self._X_train)
-        self._Y_test_preds_rf = self.__cv_rfc.best_estimator_.predict(self._X_test)
+        self._Y_train_preds_rf = self.__cv_rfc.best_estimator_ \
+                                .predict(self._X_train)
+        self._Y_test_preds_rf = self.__cv_rfc.best_estimator_ \
+                                .predict(self._X_test)
         
         self._Y_train_preds_lr = self.__lrc.predict(self._X_train)
         self._Y_test_preds_lr = self.__lrc.predict(self._X_test)
@@ -279,43 +286,48 @@ class churn_predictor:
         # scores
         logout = "random forest results\n"
         logout += "test results\n"
-        logout += classification_report(self._Y_test, self._Y_test_preds_rf) + "\n"
+        logout += classification_report(self._Y_test, self._Y_test_preds_rf) \
+                    + "\n"
         logout += "train results\n"
-        logout += classification_report(self._Y_train, self._Y_train_preds_rf) + "\n"
+        logout += classification_report(self._Y_train, self._Y_train_preds_rf) \
+                    + "\n"
         
         logout += "logistic regression results\n"
         logout += "test results\n"
-        logout += classification_report(self._Y_test, self._Y_test_preds_lr) + "\n"
+        logout += classification_report(self._Y_test, self._Y_test_preds_lr) \
+                    + "\n"
         logout += "train results\n"
-        logout += classification_report(self._Y_train, self._Y_train_preds_lr) + "\n"
+        logout += classification_report(self._Y_train, self._Y_train_preds_lr) \
+                    + "\n"
 
-        self._logger.info(logout)
+        self._logger.info(f"{logout} (016)")
 
         # save best model
-        joblib.dump(self.__cv_rfc.best_estimator_, self._modelsPth + '/rfc_model.pkl')
+        joblib.dump(self.__cv_rfc.best_estimator_, self._modelsPth \
+                    + '/rfc_model.pkl')
         joblib.dump(self.__lrc, self._modelsPth + '/logistic_model.pkl')
-        self._logger.info(f"Training Finished")
+        self._logger.info(f"Training Finished (017)")
 
 
     def classification_report_image(self):
         '''
-        produces classification report for training and testing results and stores report as image
-        in images folder
+        produces classification report for training and testing results and
+        stores report as image in images folder.
+
         input:
                 None
-    
+
         output:
                 None
         '''
         
+        self._logger.info(f"Classification Report Started (018)")
         lrc_plot = plot_roc_curve(self.__lrc, self._X_test, self._Y_test)
         plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_lrc.png')
         
         plt.figure(figsize=(15, 8))
         ax = plt.gca()
-        # rfc_disp = plot_roc_curve(self.__cv_rfc.best_estimator_, self._X_test, self._Y_test, ax=ax, alpha=0.8)
         lrc_plot.plot(ax=ax, alpha=0.8)
-        #plt.show()
         plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_rfc.png')
 
         # Test Saved Models
@@ -323,35 +335,39 @@ class churn_predictor:
         lr_model = joblib.load(self._modelsPth + '/logistic_model.pkl')
 
         lrc_plot = plot_roc_curve(lr_model, self._X_test, self._Y_test)
-        plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_lrc-best-model.png')
+        plt.savefig(self._imgPth + "/"  \
+                    + 'false-true-positives_rate_lrc-best-model.png')
 
         plt.figure(figsize=(15, 8))
         ax = plt.gca()
-        # rfc_disp = plot_roc_curve(rfc_model, self._X_test, self._Y_test, ax=ax, alpha=0.8)
         lrc_plot.plot(ax=ax, alpha=0.8)
-        #plt.show()
-        plt.savefig(self._imgPth + "/" + 'false-true-positives_rate_rfc-best-model.png')
+        plt.savefig(self._imgPth + "/" 
+                    + 'false-true-positives_rate_rfc-best-model.png')
 
-        self._logger.debug("to run Mean Shap")
+        self._logger.debug("to run Mean Shap (019)")
         explainer = shap.TreeExplainer(self.__cv_rfc.best_estimator_)
-        self._logger.debug("to get Shap values")
+        self._logger.debug("to get Shap values (020)")
         shap_values = explainer.shap_values(self._X_test)
-        self._logger.debug("to Plot Mean Shap")
-        shap.summary_plot(shap_values, self._X_test, plot_type="bar", show=False)
-        self._logger.debug("to save plot Mean Shap")
+        self._logger.debug("to Plot Mean Shap (021)")
+        shap.summary_plot(shap_values, self._X_test, plot_type="bar", \
+                            show=False)
+        self._logger.debug("to save plot Mean Shap (022)")
         plt.savefig(self._imgPth + "/" + 'mean_SHAP.png')
-        self._logger.debug("Mean Shap done")
+        self._logger.debug("Mean Shap done (023)")
+        self._logger.info(f"Classification Report Finished (024)")
 
 
     def feature_importance_plot(self):
         '''
         creates and stores the feature importances in pth
+
         input:
-                NoneS
+                None
         output:
                 None
         '''
         
+        self._logger.info(f"Features Importance Report Started (025)")
         # Calculate feature importances
         importances = self.__cv_rfc.best_estimator_.feature_importances_
         # Sort feature importances in descending order
@@ -376,39 +392,73 @@ class churn_predictor:
         plt.savefig(self._imgPth + "/" + 'features_importance.png')
 
         plt.rc('figure', figsize=(5, 5))
-        #plt.text(0.01, 0.05, str(model.summary()), {'fontsize': 12}) old approach
-        plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10}, fontproperties = 'monospace')
-        plt.text(0.01, 0.05, str(classification_report(self._Y_test, self._Y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-        plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
-        plt.text(0.01, 0.7, str(classification_report(self._Y_train, self._Y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-        plt.axis('off');
+        plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10},
+                fontproperties = 'monospace')
+        # approach improved by OP -> monospace!
+        plt.text(0.01, 0.05, str(classification_report(self._Y_test,
+                self._Y_test_preds_rf)), {'fontsize': 10}, 
+                fontproperties = 'monospace') 
+        plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, 
+                fontproperties = 'monospace')
+        # approach improved by OP -> monospace!
+        plt.text(0.01, 0.7, str(classification_report(self._Y_train, 
+                self._Y_train_preds_rf)), {'fontsize': 10}, 
+                fontproperties = 'monospace') 
+        plt.axis('off')
         plt.savefig(self._imgPth + "/" + 'random_forest.png')
 
         plt.rc('figure', figsize=(5, 5))
-        plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
-        plt.text(0.01, 0.05, str(classification_report(self._Y_train, self._Y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-        plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
-        plt.text(0.01, 0.7, str(classification_report(self._Y_test, self._Y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace') # approach improved by OP -> monospace!
-        plt.axis('off');
+        plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10},
+                fontproperties = 'monospace')
+        # approach improved by OP -> monospace!
+        plt.text(0.01, 0.05, str(classification_report(self._Y_train, 
+                self._Y_train_preds_lr)), {'fontsize': 10}, 
+                fontproperties = 'monospace') 
+        plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, 
+                fontproperties = 'monospace')
+        # approach improved by OP -> monospace!
+        plt.text(0.01, 0.7, str(classification_report(self._Y_test, 
+                self._Y_test_preds_lr)), {'fontsize': 10}, 
+                fontproperties = 'monospace') 
+        plt.axis('off')
         plt.savefig(self._imgPth + "/" + 'logistic_regression.png')
+        self._logger.info(f"Features Importance Report Finished (026)")
 
 
     def run(self):
         '''
+        Run the Classes Implementations
+
+        Input:
+            None
+
+        Outputs:
+            None
         '''
+
+        logger.info("Script Execution Began (027)")
         self.perform_eda()
         self.perform_feature_engineering()
         self.train_models()
         self.classification_report_image()
         self.feature_importance_plot()
+        logger.info("Script Execution Finished (028)")
 
 
 def main():
     '''
-    Run the main script function
+    Main script function
+
+    Inputs:
+        None
+
+    Outputs:
+        None
     '''
+
     churnPred = churn_predictor("./data/bank_data.csv", log_handler=logHandler)
     churnPred.run()
+
 
 if __name__ == '__main__':
     '''
@@ -441,7 +491,7 @@ if __name__ == '__main__':
     # Configure the logger
     os.makedirs(loggPath, exist_ok=True)  # Create log path
 
-    logger = log.getLogger('ChurmPred')  # Get Logger
+    logger = log.getLogger('ChurnPred')  # Get Logger
     # Add the log message file handler to the logger
     logHandler = log.handlers.RotatingFileHandler(FullFileNamePath, maxBytes=10485760, backupCount=5)
     # Logger Formater
@@ -452,11 +502,11 @@ if __name__ == '__main__':
     if 'logHandler' in globals():
         logger.addHandler(logHandler)
     else:
-        logger.debug(f"logHandler NOT defined (017)")
+        logger.debug(f"logHandler NOT defined (029)")
     # Set Logger Lever
     logger.setLevel(logLevel_)
     # Start Running
-    logger.debug(f"Running in {OS_} (018)")
+    logger.debug(f"Running in {OS_} (030)")
 
     # Main Script
     main()

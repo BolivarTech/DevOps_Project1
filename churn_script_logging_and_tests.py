@@ -1,6 +1,11 @@
-"""
+'''
 Perform TDD on the classes
-"""
+
+Author: Julian Bolvar
+Version: 1.0.0
+Date history:  2023-04-19  Base code
+'''
+
 # import system libraries
 import logging as log
 import logging.handlers
@@ -8,6 +13,7 @@ import sys
 import os
 from os.path import exists
 
+# Main Class Import
 from churn_library import churn_predictor 
 
 # Main Logger Environment 
@@ -24,52 +30,72 @@ class churn_predictor_test(churn_predictor):
     def _test_files_exist(self, files, testName='None'):
         '''
         Test if files list exist
+
+        Inputs:
+            files (list): List of files to test
+            testName (str): String with the Test's name
+
+        Outputs:
+            None
         '''
 
         try:
             for file in files:
                 assert exists(file), f"File {file} doen't exist"
         except AssertionError as err:
-            logging.error(err)
+            logging.error(f"{err} (001)")
         else:
-            msg = f"Test {testName} Passed"
+            msg = f"Test {testName} Passed (002)"
             print(msg)
             logging.info(msg)
 
 
     def test_import(self):
         '''
-        test data import - this example is completed for you to assist with the other test functions
+        Test data import funtion
+        
+        Inputs:
+            None
+
+        Outputs:
+            None
         '''
         try:
             self.import_data("./data/bank_data.csv")
-            logging.info("Testing import_data: SUCCESS")
+            logging.info("Testing import_data: SUCCESS (003)")
         except FileNotFoundError as err:
-            logging.error("Testing import_eda: The file wasn't found\n {err}")
+            logging.error("Testing import_eda: The file wasn't found\n {err} (004)")
             raise err
         else:
-            msg = f"Test Import Passed"
+            msg = f"Test Import Passed (005)"
             print(msg)
             logging.info(msg)
     
         try:
-            assert hasattr(self,'_df'), f"_df not defined"
+            assert hasattr(self,'_df'), f"_df not defined (006)"
             assert self._df.shape[0] > 0, "Testing import_data: The file \
-            doesn't appear to have columns"  
+            doesn't appear to have columns (007)"  
             assert self._df.shape[1] > 0, "Testing import_data: The file \
-            doesn't appear to have rows"
+            doesn't appear to have rows (008)"
         except AssertionError as err:
             logging.error(err)
             raise err
         else:
-            msg = f"Test _df Passed"
+            msg = f"Test _df Passed (009)"
             print(msg)
             logging.info(msg)
     
     def test_eda(self):
         '''
-        test perform eda function
+        Test perform eda function
+
+        Inputs:
+            None
+
+        Outputs:
+            None
         '''
+
         self.perform_eda()
         
 		# Test that all files were created
@@ -80,8 +106,15 @@ class churn_predictor_test(churn_predictor):
     
     def test_encoder_helper(self):
         '''
-        test encoder helper
+        Test encoder helper
+
+        Inputs:
+            None
+
+        Outputs:
+            None
         '''
+
         cat_columns = [
             'Gender',
             'Education_Level',
@@ -105,41 +138,53 @@ class churn_predictor_test(churn_predictor):
         try:
             assert (len(new_colums) == (len(org_colums) + len(cat_columns))), \
                     f"Colums size dosen't match {len(new_colums)} vs \
-                    {(len(org_colums) + len(cat_columns))}"
+                    {(len(org_colums) + len(cat_columns))} (010)"
             assert set(new_cat_columns).issubset(set(new_colums)), \
                     f"Columns names doesn't match\n {new_cat_columns}\n \
-                    {new_colums}"
+                    {new_colums} (011)"
         except AssertionError as err:
             logging.error(err)
         else:
-            msg = f"Test encoder_helper Passed"
+            msg = f"Test encoder_helper Passed (012)"
             print(msg)
             logging.info(msg)
 
     
     def test_perform_feature_engineering(self):
         '''
-        test perform_feature_engineering
+        Test perform_feature_engineering
+
+        Inputs:
+            None
+
+        Outputs:
+            None
         '''
 
         self.perform_feature_engineering()
         
 		# Tests
         try: 
-            assert hasattr(self,'_X_train'), f"_X_train not defined"
-            assert hasattr(self,'_X_test'), f"_X_test not defined"
-            assert hasattr(self,'_Y_train'), f"_Y_train not defined"
-            assert hasattr(self,'_Y_test'), f"_Y_test not defined"
+            assert hasattr(self,'_X_train'), f"_X_train not defined (013)"
+            assert hasattr(self,'_X_test'), f"_X_test not defined (014)"
+            assert hasattr(self,'_Y_train'), f"_Y_train not defined (015)"
+            assert hasattr(self,'_Y_test'), f"_Y_test not defined (016)"
         except AssertionError as err:
             logging.error(err)
         else:
-            msg = f"Test feature_engineering Passed"
+            msg = f"Test feature_engineering Passed (017)"
             print(msg)
             logging.info(msg)
     
     def test_train_models(self):
         '''
-        test train_models
+        Test train_models
+
+        Inputs:
+            None
+
+        Outputs:
+            None
         '''
         
         self.train_models()
@@ -153,6 +198,12 @@ class churn_predictor_test(churn_predictor):
     def test_classification_report_image(self):
         '''
         Test if classification images reports where created
+
+        Inputs:
+            None
+
+        Outputs:
+            None
         '''
 
         self.classification_report_image()
@@ -172,6 +223,12 @@ class churn_predictor_test(churn_predictor):
     def test_feature_importance_plot(self):
         '''
         Test if feature importaace plors where created
+
+        Inputs:
+            None
+
+        Outputs:
+            None
         '''
 
         self.feature_importance_plot()
@@ -186,9 +243,17 @@ class churn_predictor_test(churn_predictor):
 
     def run(self):
         '''
-        Run the Test
-        '''
+        Run All the Test
 
+        Inputs:
+            None
+
+        Outputs:
+            None
+        '''
+        
+        print("Tests Started (018)")
+        self._logger.info("Tests Started (018)")
         self.test_import()
         self.test_eda()
         self.test_encoder_helper()
@@ -196,6 +261,8 @@ class churn_predictor_test(churn_predictor):
         self.test_train_models()
         self.test_classification_report_image()
         self.test_feature_importance_plot()
+        print("Tests Finished (019)")
+        self._logger.info("Tests Finished (019)")
 
 if __name__ == "__main__":
 	# logging.basicConfig(
@@ -206,16 +273,18 @@ if __name__ == "__main__":
     
     logger = log.getLogger('ChurmPredTest')  # Get Logger
     # Add the log message file handler to the logger
-    logHandler = log.handlers.RotatingFileHandler('./log/' + logFileName, maxBytes=10485760, backupCount=5)
+    logHandler = log.handlers.RotatingFileHandler('./log/' + logFileName,
+                                                maxBytes=10485760, 
+                                                backupCount=5)
     # Logger Formater
-    logFormatter = log.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s: %(message)s',
-                                datefmt='%Y/%m/%d %H:%M:%S')
+    logFormatter = log.Formatter(fmt='%(asctime)s - %(name)s - %(levelname)s: \
+                                %(message)s', datefmt='%Y/%m/%d %H:%M:%S')
     logHandler.setFormatter(logFormatter)
     # Add handler to logger
     if 'logHandler' in globals():
         logger.addHandler(logHandler)
     else:
-        logger.debug(f"logHandler NOT defined (017)")
+        logger.debug(f"logHandler NOT defined (020)")
     # Set Logger Lever
     logger.setLevel(logLevel_)
     
