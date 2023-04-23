@@ -49,7 +49,7 @@ After installing Anaconda on your system, create a virtual environment:
 
 Activate the virtual environment churnpred.
 
-> Windows: `activate churnpred`
+> Windows: `activate churnpred`  
 > Linux: `source activate churnpred`
 
 Install Dependencies:
