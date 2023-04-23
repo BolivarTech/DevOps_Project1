@@ -3,13 +3,19 @@ This library provide Customer Churn Predictions based on model
 
 Author: Julian Bolvar
 Version: 1.0.0
-Date history:  2023-04-16  Base code
+Date history:
+2023-04-22  Refactory Done and Standard Coding Passed
+2023-04-16  Base code
 '''
-# library doc string
+
+# PArguments Parser
+from argparse import ArgumentParser
+# import system libraries
 import os
 import sys
 import logging.handlers
 import logging as log
+# ML libraries
 from sklearn.metrics import plot_roc_curve, classification_report
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
@@ -98,6 +104,7 @@ class ChurnPredictor:
             self._logger.warning("Models Path NOT Defined (007)")
 
         # Model Variables
+        self._run_model = None
         self._x = None
         self._x_train = None
         self._x_test = None
@@ -259,7 +266,8 @@ class ChurnPredictor:
 
     def train_models(self):
         '''
-        train, store model results: images + scores, and store best models
+        train, store model results: images + scores, and store best models in
+        ./models directory
         input:
                 None
         output:
@@ -442,24 +450,112 @@ class ChurnPredictor:
         plt.savefig(self._img_pth + "/" + 'logistic_regression.png')
         self._logger.info("Features Importance Report Finished (026)")
 
-    def run(self):
+    def load_model(self, model_path_file):
         '''
-        Run the Classes Implementations
+        Load the model in model_path_file to be runned on production
 
-        Input:
-            None
+        Inputs:
+            model_path_file: File with the model to be loaded
 
         Outputs:
             None
         '''
 
-        LOGGER.info("Script Execution Began (027)")
-        self.perform_eda()
-        self.perform_feature_engineering()
-        self.train_models()
-        self.classification_report_image()
-        self.feature_importance_plot()
-        LOGGER.info("Script Execution Finished (028)")
+        self._logger.info("Loading Model %s", model_path_file)
+        try:
+            self._run_model = joblib.load(model_path_file)
+        except FileNotFoundError as err:
+            self._logger.error("%s (027)", err)
+            raise err
+        else:
+            self._logger.info("Model %s Loaded", model_path_file)
+
+    def predict(self, x_data=None):
+        '''
+        Predict the Y values based on the loaded model
+
+        Input:
+            x_data: {array-like, sparse matrix} of shape (n_samples, n_features)
+                     The data matrix for which we want to get the predictions.
+        Outputs:
+            y_data: array of shape (n_samples,) containing the class labels for
+                    each sample.
+        '''
+
+        if x_data is None:
+            x_data = self._x
+        return self._run_model.predict(x_data)
+
+    def run(self, mode='Train', model_path_file=None):
+        '''
+        Run the Classes Implementations
+
+        Input:
+            mode: especify if is excecuting on 'Train' mode or 'Run' mode.
+            model_path_file: Path to the model File
+        Outputs:
+            None
+        '''
+
+        LOGGER.info("Script Execution Began (028)")
+        if mode == 'Train':
+            self.perform_eda()
+            self.perform_feature_engineering()
+            self.train_models()
+            self.classification_report_image()
+            self.feature_importance_plot()
+        elif mode == 'Run':
+            self.load_model(model_path_file)
+            self.perform_eda()
+            self.perform_feature_engineering()
+            y_data = self.predict()
+            print(y_data)
+        else:
+            LOGGER.error("Script Unkown Excecution mode (029)")
+        LOGGER.info("Script Execution Finished (030)")
+
+
+def build_argparser():
+    """
+    Parse command line arguments.
+
+    Inputs:
+        None
+
+    Outputs:
+        command line arguments
+    """
+
+    parser = ArgumentParser()
+    parser.add_argument(
+        "-t",
+        "--train",
+        required=False,
+        action="store_true",
+        help="Perform a model training, if -a "
+        "not specified a new model is "
+        "trained.")
+    parser.add_argument(
+        "-r",
+        "--run",
+        required=False,
+        action="store_true",
+        help="Perform the model running, -m must be especified .")
+    parser.add_argument(
+        "-m",
+        "--model",
+        required=False,
+        type=str,
+        default='./models/logistic_model.pkl',
+        help="Model to be loaded on running mode.")
+    parser.add_argument(
+        "-d",
+        "--data",
+        required=False,
+        type=str,
+        default='./data/bank_data.csv',
+        help="Data to be used on running or trainign mode.")
+    return parser
 
 
 def main():
@@ -473,8 +569,29 @@ def main():
         None
     '''
 
-    churn_pred = ChurnPredictor("./data/bank_data.csv", log_handler=LOGHANDLER)
-    churn_pred.run()
+    args = build_argparser().parse_args()
+    data = args.data
+    model = args.model
+    if args.train and args.run:
+        LOGGER.error("Options Train and Run can't be used togethers (031)")
+    elif args.train:
+        if data is not None:
+            LOGGER.debug("Loading Data file %s", data)
+            churn_pred = ChurnPredictor(data, log_handler=LOGHANDLER)
+            churn_pred.run()
+        else:
+            LOGGER.error("NO data file especified (032)")
+    elif args.run:
+        if data is not None:
+            churn_pred = ChurnPredictor(data, log_handler=LOGHANDLER)
+            if model is not None:
+                churn_pred.run(mode='Run', model_path_file=model)
+            else:
+                LOGGER.error("Model file NOT especified (033)")
+        else:
+            LOGGER.error("NO data file especified (034)")
+    else:
+        LOGGER.error("Unkwoun Running Mode (035)")
 
 
 if __name__ == '__main__':
@@ -519,11 +636,11 @@ if __name__ == '__main__':
     if 'LOGHANDLER' in globals():
         LOGGER.addHandler(LOGHANDLER)
     else:
-        LOGGER.debug("LOGHANDLER NOT defined (029)")
+        LOGGER.debug("LOGHANDLER NOT defined (036)")
     # Set LOGGER Lever
     LOGGER.setLevel(LOGLEVEL_)
     # Start Running
-    LOGGER.debug("Running in %s (030)", OS_)
+    LOGGER.debug("Running in %s (037)", OS_)
 
     # Main Script
     main()

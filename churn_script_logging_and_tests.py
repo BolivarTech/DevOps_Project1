@@ -3,13 +3,18 @@ Perform TDD on the classes
 
 Author: Julian Bolvar
 Version: 1.0.0
-Date history:  2023-04-19  Base code
+Date history:
+2023-04-22  All Tests passed completed and standard coding passed
+2023-04-19  Base code
 '''
 
 # import system libraries
 import logging as log
 import logging.handlers
 from os.path import exists
+
+# ML imports
+import numpy as np
 
 # Main Class Import
 from churn_library import ChurnPredictor
@@ -232,6 +237,67 @@ class ChurnPredictorTest(ChurnPredictor):
                  ]
         self._test_files_exist(files, test_name='feature_importance_plot')
 
+    def test_load_model(self):
+        '''
+        Test the model loader
+
+        Inputs:
+            None
+
+        Outputs:
+            None
+        '''
+
+        # Tests
+        try:
+            self.load_model('foo')
+        except Exception as err:
+            if not isinstance(err, FileNotFoundError):
+                logging.error("Load Module not fail on no file (018)")
+                logging.error(err)
+        else:
+            try:
+                self.load_model('./models/logistic_model.pkl')
+                assert hasattr(
+                    self, '_run_model'), "_run_model not defined (019)"
+            except AssertionError as err:
+                logging.error(err)
+            except FileNotFoundError as err:
+                logging.error(err)
+            else:
+                msg = "Test Load Model Passed (020)"
+                print(msg)
+                logging.info(msg)
+
+    def test_predict(self):
+        '''
+        Test the model prediction function
+
+        Inputs:
+            None
+
+        Outputs:
+            None
+        '''
+
+        self.import_data("./data/bank_data.csv")
+        self.load_model('./models/logistic_model.pkl')
+        self.perform_eda()
+        # self.test_encoder_helper()
+        self.perform_feature_engineering()
+        y_out = self.predict()
+        try:
+            assert isinstance(y_out, np.ndarray), \
+                "Predict Output is not numpy.ndarray isntance (021)"
+            assert y_out.size > 0, "Predict Output is not empty (022)"
+        except AssertionError as err:
+            logging.error(err)
+        else:
+            msg = "Test Predict Passed (023)"
+            print(msg)
+            logging.info(msg)
+
+
     def run(self):
         '''
         Run All the Test
@@ -243,8 +309,8 @@ class ChurnPredictorTest(ChurnPredictor):
             None
         '''
 
-        print("Tests Started (018)")
-        self._logger.info("Tests Started (018)")
+        print("Tests Started (024)")
+        self._logger.info("Tests Started (025)")
         self.test_import()
         self.test_eda()
         self.test_encoder_helper()
@@ -252,8 +318,10 @@ class ChurnPredictorTest(ChurnPredictor):
         self.test_train_models()
         self.test_classification_report_image()
         self.test_feature_importance_plot()
-        print("Tests Finished (019)")
-        self._logger.info("Tests Finished (019)")
+        self.test_load_model()
+        self.test_predict()
+        print("Tests Finished (026)")
+        self._logger.info("Tests Finished (027)")
 
 
 if __name__ == "__main__":
@@ -272,7 +340,7 @@ if __name__ == "__main__":
     if 'LOGHANDLER' in globals():
         LOGGER.addHandler(LOGHANDLER)
     else:
-        LOGGER.debug("LOGHANDLER NOT defined (020)")
+        LOGGER.debug("LOGHANDLER NOT defined (028)")
     # Set Logger Lever
     LOGGER.setLevel(LOGLEVEL_)
 
