@@ -210,10 +210,10 @@ class ChurnPredictorTest(ChurnPredictor):
 
         # Test that all files were created
         files = [
-            f"{self._img_pth}/false-true-positives_rate_lrc.png",
+            f"{self._img_pth}/false-true-positives_rate_lr.png",
             f"{self._img_pth}/false-true-positives_rate_rfc.png",
-            f"{self._img_pth}/false-true-positives_rate_lrc-best-model.png",
             f"{self._img_pth}/false-true-positives_rate_rfc-best-model.png",
+            f"{self._img_pth}/false-true-positives_rate_lr-best-model.png",
             f"{self._img_pth}/mean_SHAP.png"]
         self._test_files_exist(files, test_name='classification_report_images')
 
@@ -296,7 +296,6 @@ class ChurnPredictorTest(ChurnPredictor):
             msg = "Test Predict Passed (023)"
             print(msg)
             logging.info(msg)
-
 
     def run(self):
         '''

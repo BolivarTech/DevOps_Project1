@@ -167,17 +167,20 @@ class ChurnPredictor:
         self._df['Churn'].hist()
         # Save the histogram
         plt.savefig(self._img_pth + "/" + 'hist-1.png')
+        plt.close()
 
         plt.figure(figsize=(20, 10))
         #plot = self._df['Customer_Age'].hist()
         self._df['Customer_Age'].hist()
         plt.savefig(self._img_pth + "/" + 'hist-2.png')
+        plt.close()
 
         plt.figure(figsize=(20, 10))
         # plot = self._df.Marital_Status.value_counts('normalize') \
         #    .plot(kind='bar')
         self._df.Marital_Status.value_counts('normalize').plot(kind='bar')
         plt.savefig(self._img_pth + "/" + 'hist-3.png')
+        plt.close()
 
         plt.figure(figsize=(20, 10))
         # distplot is deprecated. Use histplot instead
@@ -186,6 +189,7 @@ class ChurnPredictor:
         # using a kernel density estimate
         sns.histplot(self._df['Total_Trans_Ct'], stat='density', kde=True)
         plt.savefig(self._img_pth + "/" + 'hist-4.png')
+        plt.close()
 
         plt.figure(figsize=(20, 10))
         # distplot is deprecated. Use histplot instead
@@ -194,11 +198,13 @@ class ChurnPredictor:
         # using a kernel density estimate
         sns.histplot(self._df['Total_Trans_Ct'], stat='density', kde=True)
         plt.savefig(self._img_pth + "/" + 'hist-5.png')
+        plt.close()
 
         plt.figure(figsize=(20, 10))
         sns.heatmap(self._df.corr(), annot=False, cmap='Dark2_r', linewidths=2)
         # plt.show()
         plt.savefig(self._img_pth + "/" + 'hist-6.png')
+        plt.close()
 
     def encoder_helper(self, category_lst, response='Churn'):
         '''
@@ -328,6 +334,30 @@ class ChurnPredictor:
         joblib.dump(self.__lrc, self._models_pth + '/logistic_model.pkl')
         self._logger.info("Training Finished (017)")
 
+    def __reports_plots_saver(self, model, model_name):
+        '''
+        Save model plots reports
+
+        Inputs:
+            model: model to save
+            model_name: Model Name
+
+        Outputs:
+            None
+        '''
+
+        model_plot = plot_roc_curve(model, self._x_test, self._y_test)
+        plt.savefig(
+            f"{self._img_pth}/false-true-positives_rate_{model_name}-best-model.png")
+        plt.close()
+
+        plt.figure(figsize=(15, 8))
+        ax_values = plt.gca()
+        model_plot.plot(ax=ax_values, alpha=0.8)
+        plt.savefig(
+            f"{self._img_pth}/false-true-positives_rate_{model_name}-best-model.png")
+        plt.close()
+
     def classification_report_image(self):
         '''
         produces classification report for training and testing results and
@@ -342,26 +372,21 @@ class ChurnPredictor:
 
         self._logger.info("Classification Report Started (018)")
         lrc_plot = plot_roc_curve(self.__lrc, self._x_test, self._y_test)
-        plt.savefig(f"{self._img_pth}/false-true-positives_rate_lrc.png")
+        plt.savefig(f"{self._img_pth}/false-true-positives_rate_lr.png")
+        plt.close()
 
         plt.figure(figsize=(15, 8))
         ax_values = plt.gca()
         lrc_plot.plot(ax=ax_values, alpha=0.8)
         plt.savefig(f"{self._img_pth}/false-true-positives_rate_rfc.png")
+        plt.close()
 
         # Test Saved Models
-        # rfc_model = joblib.load(self._models_pth + '/rfc_model.pkl')
+        rfc_model = joblib.load(self._models_pth + '/rfc_model.pkl')
+        self.__reports_plots_saver(rfc_model, "rfc")
+
         lr_model = joblib.load(f"{self._models_pth}/logistic_model.pkl")
-
-        lrc_plot = plot_roc_curve(lr_model, self._x_test, self._y_test)
-        plt.savefig(
-            f"{self._img_pth}/false-true-positives_rate_lrc-best-model.png")
-
-        plt.figure(figsize=(15, 8))
-        ax_values = plt.gca()
-        lrc_plot.plot(ax=ax_values, alpha=0.8)
-        plt.savefig(
-            f"{self._img_pth}/false-true-positives_rate_rfc-best-model.png")
+        self.__reports_plots_saver(lr_model, "lr")
 
         self._logger.debug("to run Mean Shap (019)")
         explainer = shap.TreeExplainer(self.__cv_rfc.best_estimator_)
@@ -372,6 +397,8 @@ class ChurnPredictor:
                           show=False)
         self._logger.debug("to save plot Mean Shap (022)")
         plt.savefig(self._img_pth + "/" + 'mean_SHAP.png')
+        plt.close()
+
         self._logger.debug("Mean Shap done (023)")
         self._logger.info("Classification Report Finished (024)")
 
@@ -406,8 +433,8 @@ class ChurnPredictor:
 
         # Add feature names as x-axis labels
         plt.xticks(range(self._x.shape[1]), names, rotation=90)
-
         plt.savefig(self._img_pth + "/" + 'features_importance.png')
+        plt.close()
 
         plt.rc('figure', figsize=(5, 5))
         plt.text(0.01, 1.25, 'Random Forest Train', {'fontsize': 10},
@@ -428,6 +455,7 @@ class ChurnPredictor:
                 'fontsize': 10}, fontproperties='monospace')
         plt.axis('off')
         plt.savefig(self._img_pth + "/" + 'random_forest.png')
+        plt.close()
 
         plt.rc('figure', figsize=(5, 5))
         plt.text(0.01, 1.25, 'Logistic Regression Train', {
@@ -448,6 +476,8 @@ class ChurnPredictor:
                 'fontsize': 10}, fontproperties='monospace')
         plt.axis('off')
         plt.savefig(self._img_pth + "/" + 'logistic_regression.png')
+        plt.close()
+
         self._logger.info("Features Importance Report Finished (026)")
 
     def load_model(self, model_path_file):
